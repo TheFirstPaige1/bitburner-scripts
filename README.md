@@ -10,4 +10,4 @@ Current scripts and their functions:
 - stockwatcher - automated stock market buyer/seller, doesn't require or use the 4S market data
 - totalhack - a single-instance hack manager that dynamically allocates RAM and periodically updates as new servers are hackable, always run on home, relies on manhack, manweaken, and mangrow subscripts
 - manhack, manweaken, mangrow - awaited single function subscripts that call a single use of their named function
-- totalrestart - kills and restarts totalhack
+- totalrestart - kills and restarts totalhack, or runs it if it doesn't exist yet
