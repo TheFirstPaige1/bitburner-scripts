@@ -115,7 +115,7 @@ export async function main(ns: NS): Promise<void> {
 				} else if (ns.getServerMoneyAvailable(target) < moneyThresh) {
 					let threadcount = 1;
 					if (ns.getServerMoneyAvailable(target) < 10) {
-						threadcount = Infinity;
+						threadcount = maxthreads;
 					} else {
 						if (formsexe) {
 							threadcount = ns.formulas.hacking.growThreads(ns.getServer(target), ns.getPlayer(), Infinity);
@@ -123,8 +123,8 @@ export async function main(ns: NS): Promise<void> {
 							let growthgoal = ns.getServerMaxMoney(target) / ns.getServerMoneyAvailable(target);
 							threadcount = Math.ceil(ns.growthAnalyze(target, growthgoal));
 						}
+						threadcount = Math.min(maxthreads, threadcount);
 					}
-					threadcount = Math.min(maxthreads, threadcount);
 					if (formsexe) {
 						timerlist[i] = ns.formulas.hacking.growTime(ns.getServer(target), ns.getPlayer());
 						ns.print("growing " + target + " for " + Math.trunc(timerlist[i]) + "ms");
