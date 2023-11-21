@@ -65,7 +65,7 @@ export async function main(ns: NS): Promise<void> {
 	for (let i = 0; i < masterlist.length; i++) {
 		let target = masterlist[i];
 		if (ns.getServerRequiredHackingLevel(target) <= ns.getHackingLevel()) {
-			if (ns.getServerMoneyAvailable(target) > 0) {
+			if (ns.getServerMaxMoney(target) > 0) {
 				targetList.push(target);
 				moneyList.push(ns.getServerMaxMoney(target) * 0.75);
 				securityList.push(ns.getServerMinSecurityLevel(target) + 5);
@@ -114,11 +114,15 @@ export async function main(ns: NS): Promise<void> {
 					pidList[i] = ns.exec("manweaken.js", ramserver, threadcount, target);
 				} else if (ns.getServerMoneyAvailable(target) < moneyThresh) {
 					let threadcount = 1;
-					if (formsexe) {
-						threadcount = ns.formulas.hacking.growThreads(ns.getServer(target), ns.getPlayer(), Infinity);
+					if (ns.getServerMoneyAvailable(target) < 10) {
+						threadcount = Infinity;
 					} else {
-						let growthgoal = ns.getServerMaxMoney(target) / ns.getServerMoneyAvailable(target);
-						threadcount = Math.ceil(ns.growthAnalyze(target, growthgoal));
+						if (formsexe) {
+							threadcount = ns.formulas.hacking.growThreads(ns.getServer(target), ns.getPlayer(), Infinity);
+						} else {
+							let growthgoal = ns.getServerMaxMoney(target) / ns.getServerMoneyAvailable(target);
+							threadcount = Math.ceil(ns.growthAnalyze(target, growthgoal));
+						}
 					}
 					threadcount = Math.min(maxthreads, threadcount);
 					if (formsexe) {
@@ -142,12 +146,6 @@ export async function main(ns: NS): Promise<void> {
 					}
 					pidList[i] = ns.exec("manhack.js", ramserver, threadcount, target);
 				}
-			}
-			if (ns.getServerMoneyAvailable(target) == 0) {
-				ns.print("removing dead server " + target);
-				targetList.splice(i, 1);
-				pidList.splice(i, 1);
-				timerlist.splice(i, 1);
 			}
 		}
 		if (formsexe) {
