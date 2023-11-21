@@ -2,7 +2,7 @@
 Scripts for BitBurner 2.5.0
 
 Current scripts and their functions:
-- autodeploy - deprecated, replaced with totalrestart
+- autodeploy - outdated and functionally replaced with totalrestart, will rework unto a unified script handler at Some PointTM
 - hackman - deprecated, replaced with totalhack
 - netscanner - outdated network trawler, awaiting a rewrite
 
@@ -14,6 +14,8 @@ Current scripts and their functions:
 
 - stockwatcher - automated stock market buyer/seller, doesn't require or use the 4S market data
 - bailwse - kills stockwatcher and sells all stocks, for when you want to stop trading
+
+- sharesbuyback - a script that'll automatically buy back as many shares as you can afford every minute until they're all purchased
 
 - totalhack - a single-instance hack manager that dynamically allocates RAM and periodically updates as new servers are hackable, always run on home, relies on manhack, manweaken, and mangrow subscripts
 - manhack, manweaken, mangrow - awaited single function subscripts that call a single use of their named function
