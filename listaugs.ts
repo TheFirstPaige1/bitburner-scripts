@@ -11,5 +11,5 @@ export async function main(ns: NS): Promise<void> {
 			}
 		}
 	}
-	ns.print(auglist.toString());
+	ns.tprint(auglist.toString());
 }

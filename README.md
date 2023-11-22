@@ -21,3 +21,6 @@ Current scripts and their functions:
 - totalhack - a single-instance hack manager that dynamically allocates RAM and periodically updates as new servers are hackable, always run on home, relies on manhack, manweaken, and mangrow subscripts
 - manhack, manweaken, mangrow - awaited single function subscripts that call a single use of their named function
 - totalrestart - kills and restarts totalhack, or runs it if it doesn't exist yet
+
+- servershare - a simple ram sharing script, kills all scripts running on purchased servers, distributes manshare to them, and run it using half maximum RAM
+- manshare - awaited infinite loop of the share function, perfectly 4GB of RAM

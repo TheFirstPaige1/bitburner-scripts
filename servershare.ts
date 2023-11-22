@@ -10,4 +10,5 @@ export async function main(ns: NS): Promise<void> {
 			}
 		}
 	}
+	ns.tprint("Private server share power: " + ns.getSharePower());
 }
