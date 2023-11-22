@@ -6,24 +6,26 @@ export async function main(ns: NS): Promise<void> {
 	let ram = 2;
 	while (ram < limit) {
 		for (let i = 0; i < ns.getPurchasedServerLimit(); i++) {
-			if (ns.serverExists("pserv-" + i)) {
-				if (ns.getServerMaxRam("pserv-" + i) < ram) {
-					ns.print("Next cost is $" + ns.formatNumber(ns.getPurchasedServerUpgradeCost("pserv-" + i, ram)));
-					while (ns.getServerMoneyAvailable("home") < ns.getPurchasedServerUpgradeCost("pserv-" + i, ram)) {
-						await ns.sleep(1000);
+			let servername = "pserv-" + i;
+			if (ns.serverExists(servername)) {
+				if (ns.getServerMaxRam(servername) < ram) {
+					ns.print("Next cost is $" + ns.formatNumber(ns.getPurchasedServerUpgradeCost(servername, ram)));
+					while (ns.getServerMoneyAvailable("home") < ns.getPurchasedServerUpgradeCost(servername, ram)) {
+						await ns.sleep(10000);
 					}
-					ns.upgradePurchasedServer("pserv-" + i, ram);
-					ns.print("Upgraded server pserv-" + i + " with " + ram + " RAM");
+					ns.upgradePurchasedServer(servername, ram);
+					ns.print("Upgraded server " + servername + " with " + ram + " RAM");
 				}
 			} else {
 				ns.print("Next cost is $" + ns.formatNumber(ns.getPurchasedServerCost(ram)));
 				while (ns.getServerMoneyAvailable("home") < ns.getPurchasedServerCost(ram)) {
-					await ns.sleep(1000);
+					await ns.sleep(10000);
 				}
-				ns.purchaseServer("pserv-" + i, ram);
-				ns.print("Purchased server pserv-" + i + " with " + ram + " RAM");
+				ns.purchaseServer(servername, ram);
+				ns.print("Purchased server " + servername + " with " + ram + " RAM");
 			}
 		}
 		ram = ram * 2;
 	}
+	ns.closeTail();
 }

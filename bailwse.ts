@@ -2,8 +2,9 @@ import { NS } from "@ns";
 export async function main(ns: NS): Promise<void> {
 	ns.scriptKill("stockwatcher.js", "home");
 	const stocknames = ns.stock.getSymbols();
-	for (let i = 0; i < stocknames.length; i++) {
-		let stockposition = ns.stock.getPosition(stocknames[i]);
-		ns.stock.sellStock(stocknames[i], stockposition[0]);
+	for (const stocksym of stocknames) {
+		while (ns.getServerMoneyAvailable("home") < 200000) { await ns.sleep(10000); }
+		ns.stock.sellStock(stocksym, ns.stock.getPosition(stocksym)[0]);
+		ns.stock.sellShort(stocksym, ns.stock.getPosition(stocksym)[2]);
 	}
 }

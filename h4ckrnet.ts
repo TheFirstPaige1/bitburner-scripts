@@ -60,4 +60,5 @@ export async function main(ns: NS): Promise<void> {
 			running = false;
 		}
 	}
+	ns.closeTail();
 }
