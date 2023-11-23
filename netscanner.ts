@@ -2,6 +2,7 @@ import { NS } from "@ns";
 export async function main(ns: NS): Promise<void> {
 	let excludedservers = ns.getPurchasedServers();
 	for (let i = 0; i < ns.hacknet.numNodes(); i++) { excludedservers.push(ns.hacknet.getNodeStats(i).name); }
+	excludedservers.push("w0r1d_d43m0n");
 	let currentserver = "home";
 	let scanservers = ["home"];
 	let knownservers = [] as Array<string>;
