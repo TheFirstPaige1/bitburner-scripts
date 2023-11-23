@@ -2,7 +2,13 @@ import { NS } from "@ns";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
 	ns.tail();
-	const limit = 1 + Math.min(ns.args[0] as number, ns.getPurchasedServerMaxRam());
+	let passedarg = 0;
+	if (ns.args.length > 0) {
+		passedarg = ns.args[0] as number;
+	} else {
+		passedarg = Infinity;
+	}
+	const limit = 1 + Math.min(passedarg, ns.getPurchasedServerMaxRam());
 	let ram = 2;
 	while (ram < limit) {
 		for (let i = 0; i < ns.getPurchasedServerLimit(); i++) {
@@ -16,7 +22,6 @@ export async function main(ns: NS): Promise<void> {
 					if (ram > 7) {
 						ns.killall(servername);
 						ns.exec("manshare.js", servername, Math.trunc(ram / 8));
-						ns.print("Private server share power: " + ns.getSharePower());
 					}
 				}
 			} else {
@@ -29,5 +34,4 @@ export async function main(ns: NS): Promise<void> {
 		}
 		ram = ram * 2;
 	}
-	ns.print("Private server share power: " + ns.getSharePower());
 }
