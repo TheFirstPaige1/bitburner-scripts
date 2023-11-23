@@ -69,15 +69,15 @@ export async function main(ns: NS): Promise<void> {
 				break;
 			case 2:
 				ns.hacknet.upgradeRam(cramnode);
-				ns.print("Upgrading " + ns.hacknet.getNodeStats(clevelnode).name + " RAM");
+				ns.print("Upgrading " + ns.hacknet.getNodeStats(cramnode).name + " RAM");
 				break;
 			case 3:
 				ns.hacknet.upgradeCore(ccorenode);
-				ns.print("Upgrading " + ns.hacknet.getNodeStats(clevelnode).name + " core");
+				ns.print("Upgrading " + ns.hacknet.getNodeStats(ccorenode).name + " core");
 				break;
 			case 4:
 				ns.hacknet.upgradeCache(chashnode);
-				ns.print("Upgrading " + ns.hacknet.getNodeStats(clevelnode).name + " cache");
+				ns.print("Upgrading " + ns.hacknet.getNodeStats(chashnode).name + " cache");
 		}
 		if (ccost == Infinity) {
 			running = false;
