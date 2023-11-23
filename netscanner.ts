@@ -1,5 +1,7 @@
 import { NS } from "@ns";
 export async function main(ns: NS): Promise<void> {
+	let excludedservers = ns.getPurchasedServers();
+	for (let i = 0; i < ns.hacknet.numNodes(); i++) { excludedservers.push(ns.hacknet.getNodeStats(i).name); }
 	let currentserver = "home";
 	let scanservers = ["home"];
 	let knownservers = [] as Array<string>;
@@ -8,7 +10,7 @@ export async function main(ns: NS): Promise<void> {
 		knownservers.push(currentserver);
 		if (currentserver == ns.getHostname() || ns.singularity.connect(currentserver)) {
 			for (const scantarg of ns.scan(currentserver)) {
-				if (!scanservers.includes(scantarg) && !knownservers.includes(scantarg)) {
+				if (!scanservers.includes(scantarg) && !knownservers.includes(scantarg) && !excludedservers.includes(scantarg)) {
 					scanservers.push(scantarg);
 					ns.singularity.connect(scantarg);
 					if (!ns.hasRootAccess(scantarg)) {
