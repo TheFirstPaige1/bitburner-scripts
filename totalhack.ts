@@ -44,12 +44,8 @@ export async function main(ns: NS): Promise<void> {
 		}
 	}
 	ns.print("creating PID and timer arrays...");
-	let pidList = [];
-	let timerlist = [];
-	for (let i = 0; i < targetList.length; i++) {
-		pidList.push(0);
-		timerlist.push(0);
-	}
+	let pidList = Array(targetList.length).fill(0);
+	let timerlist = Array(targetList.length).fill(0);
 	ns.print("beginning main loop");
 	let loopcount = 0;
 	while (true) {
@@ -158,10 +154,10 @@ export async function main(ns: NS): Promise<void> {
 					}
 				}
 			}
-			ns.print("updating PID array...");
-			for (let i = pidList.length; i < targetList.length; i++) {
-				pidList.push(0);
-				timerlist.push(0);
+			ns.print("updating PID and timer arrays...");
+			if (pidList.length < targetList.length) {
+				pidList = pidList.concat(Array(targetList.length - pidList.length).fill(0));
+				timerlist = timerlist.concat(Array(targetList.length - timerlist.length).fill(0));
 			}
 			if (!formsexe) {
 				ns.print("checking for Formulas.exe...");
