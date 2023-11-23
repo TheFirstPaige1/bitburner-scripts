@@ -1,19 +1,27 @@
 import { NS } from "@ns";
 export async function main(ns: NS): Promise<void> {
-	let masterlist = ["home"];
-	let contracts = [] as Array<string>;
-	for (const scantarg of masterlist) {
-		let workinglist = ns.scan(scantarg);
-		for (const target of workinglist) {
-			if (!masterlist.includes(target)) {
-				for (const fn of [ns.brutessh, ns.ftpcrack, ns.relaysmtp, ns.httpworm, ns.sqlinject, ns.nuke]) try { fn(target) } catch { }
-				if (ns.hasRootAccess(target)) { masterlist.push(target); }
+	let currentserver = "home";
+	let scanservers = ["home"];
+	let knownservers = [] as Array<string>;
+	while (scanservers.length > 0) {
+		currentserver = scanservers[0];
+		knownservers.push(currentserver);
+		if (currentserver == ns.getHostname() || ns.singularity.connect(currentserver)) {
+			for (const scantarg of ns.scan(currentserver)) {
+				if (!scanservers.includes(scantarg) && !knownservers.includes(scantarg)) {
+					scanservers.push(scantarg);
+					ns.singularity.connect(scantarg);
+					if (!ns.hasRootAccess(scantarg)) {
+						for (const fn of [ns.brutessh, ns.ftpcrack, ns.relaysmtp, ns.httpworm, ns.sqlinject, ns.nuke]) try { fn(scantarg) } catch { }
+					}
+					if (ns.hasRootAccess(scantarg) && ns.getServerRequiredHackingLevel(scantarg) <= ns.getHackingLevel() && !ns.getServer(scantarg).backdoorInstalled) {
+						await ns.singularity.installBackdoor();
+					}
+					ns.scp(ns.ls(scantarg, ".lit"), "home", scantarg);
+					ns.singularity.connect(currentserver);
+				}
 			}
 		}
+		scanservers = scanservers.slice(1);
 	}
-	masterlist = masterlist.slice(1);
-	ns.rm("masterlist.txt");
-	ns.write("masterlist.txt", masterlist.toString());
-	ns.rm("contracts.txt");
-	ns.write("contracts.txt", contracts.toString());
 }
