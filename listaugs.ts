@@ -12,16 +12,16 @@ export async function main(ns: NS): Promise<void> {
 		const factaugs = ns.singularity.getAugmentationsFromFaction(faction);
 		for (const targaug of factaugs) {
 			if (!auglist.includes(targaug) && !playeraugs.includes(targaug)) {
-				let addedyet = false;
 				for (const stat of desiredstats) {
-					const augstats = ns.singularity.getAugmentationStats(targaug);
-					if (augstats[stat] > 1 && !addedyet) {
-						auglist.push(targaug);
-						addedyet = true;
-					}
+					let augstats = ns.singularity.getAugmentationStats(targaug);
+					if (augstats[stat] > 1 && !auglist.includes(targaug)) { auglist.push(targaug); }
 				}
 			}
 		}
 	}
 	ns.tprint(auglist.toString());
+	//TODO:
+	//sort by reputation cost high -> low
+	//check against a list of factions ordered early -> late
+	//work for each in turn until all augs are acquired
 }
