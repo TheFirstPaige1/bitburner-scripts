@@ -6,7 +6,7 @@ Current scripts and their functions:
 - hackman - deprecated, replaced with totalhack
 
 - h4ckrnet - buys up as many hacknet nodes and upgrades as it can, always purchasing the cheapest first, likely needs a rewrite to account for hacknet servers
-- serverstager - buys as many private servers as possible at 2GB each, and then incrementally upgrades them in order until a limit is reached, pass a number as an argument to set a limit
+- serverstager - buys as many private servers as possible at 2GB each, and then incrementally upgrades them in order until a limit is reached, pass a number as an argument to set a limit, now also automatically shares half the RAM where possible using the same method as servershare
 
 - netscanner - iterates over the network and hacks and backdoors as many as possible, also copies .lit files to home
 - darkweb - buys the TOR browser and then each hacking program in turn

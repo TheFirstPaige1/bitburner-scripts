@@ -10,22 +10,24 @@ export async function main(ns: NS): Promise<void> {
 			if (ns.serverExists(servername)) {
 				if (ns.getServerMaxRam(servername) < ram) {
 					ns.print("Next cost is $" + ns.formatNumber(ns.getPurchasedServerUpgradeCost(servername, ram)));
-					while (ns.getServerMoneyAvailable("home") < ns.getPurchasedServerUpgradeCost(servername, ram)) {
-						await ns.sleep(10000);
-					}
+					while (ns.getServerMoneyAvailable("home") < ns.getPurchasedServerUpgradeCost(servername, ram)) { await ns.sleep(10000); }
 					ns.upgradePurchasedServer(servername, ram);
 					ns.print("Upgraded server " + servername + " with " + ram + " RAM");
+					if (ram > 7) {
+						ns.killall(servername);
+						ns.exec("manshare.js", servername, Math.trunc(ram / 8));
+						ns.print("Private server share power: " + ns.getSharePower());
+					}
 				}
 			} else {
 				ns.print("Next cost is $" + ns.formatNumber(ns.getPurchasedServerCost(ram)));
-				while (ns.getServerMoneyAvailable("home") < ns.getPurchasedServerCost(ram)) {
-					await ns.sleep(10000);
-				}
+				while (ns.getServerMoneyAvailable("home") < ns.getPurchasedServerCost(ram)) { await ns.sleep(10000); }
 				ns.purchaseServer(servername, ram);
 				ns.print("Purchased server " + servername + " with " + ram + " RAM");
+				ns.scp("manshare.js", servername);
 			}
 		}
 		ram = ram * 2;
 	}
-	ns.closeTail();
+	ns.print("Private server share power: " + ns.getSharePower());
 }
