@@ -7,8 +7,9 @@ Current scripts and their functions:
 
 - h4ckrnet - buys up as many hacknet nodes and upgrades as it can, always purchasing the cheapest first, likely needs a rewrite to account for hacknet servers
 - serverstager - buys as many private servers as possible at 2GB each, and then incrementally upgrades them in order until a limit is reached, pass a number as an argument to set a limit, now also automatically shares half the RAM where possible using the same method as servershare
+- netscanner - creates a networkmap.txt containing an array of servers and the servers they were reached via, in pairs, to be used with a map script and a connect script
 
-- netscanner - iterates over the network and hacks and backdoors as many as possible, also copies .lit files to home
+- nettrawler - iterates over the network and hacks and backdoors as many as possible, also copies .lit files to home
 - darkweb - buys the TOR browser and then each hacking program in turn
 - sourcefiler - creates a txt file with the current source files owned including the currently accessed node
 - listaugs - prints to the log all unowned and faction available augments filtered by a list of desireable stats, awaiting further work
