@@ -108,7 +108,8 @@ export async function main(ns: NS): Promise<void> {
 		if (formsexe) {
 			let lowestms = Infinity;
 			for (const listtime of timerlist) { if (listtime < lowestms) { lowestms = listtime; } }
-			await ns.sleep(lowestms);
+			for (let i = 0; i < timerlist.length; i++) { timerlist[i] = timerlist[i] - lowestms; }
+			await ns.sleep(lowestms + 1);
 		} else {
 			let looping = true;
 			while (looping) {
