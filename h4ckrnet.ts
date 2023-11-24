@@ -5,10 +5,8 @@ export async function main(ns: NS): Promise<void> {
 	let running = true;
 	let hackservs = false;
 	if (ns.fileExists("sourcefiles.txt", "home")) {
-		let bitnodes = ns.read("sourcefiles.txt").split(",");
-		if (bitnodes[0] == "9" || (bitnodes.length > 8 && bitnodes[9] != "")) {
-			hackservs = true;
-		}
+		let bitnodes = JSON.parse(ns.read("sourcefiles.txt"));
+		if (bitnodes[0] == 9 || bitnodes[9] > 0) { hackservs = true; }
 	}
 	while (running == true) {
 		let cdex = 0;
@@ -79,8 +77,6 @@ export async function main(ns: NS): Promise<void> {
 				ns.hacknet.upgradeCache(chashnode);
 				ns.print("Upgrading " + ns.hacknet.getNodeStats(chashnode).name + " cache");
 		}
-		if (ccost == Infinity) {
-			running = false;
-		}
+		if (ccost == Infinity) { running = false; }
 	}
 }

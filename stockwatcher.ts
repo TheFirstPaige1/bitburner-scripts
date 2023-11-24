@@ -6,19 +6,12 @@ export async function main(ns: NS): Promise<void> {
 	const moneybuffer = 1000000;
 	const stocknames = ns.stock.getSymbols();
 	let stockhistory = [];
-	for (let i = 0; i < stocknames.length; i++) {
-		stockhistory.push([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-	}
+	for (let i = 0; i < stocknames.length; i++) { stockhistory.push([] as Array<number>); }
 	let updatecount = 0;
 	ns.print("building stock price history for 20 updates");
 	while (updatecount < 20) {
-		for (let i = 0; i < stocknames.length; i++) {
-			stockhistory[i].unshift(ns.stock.getPrice(stocknames[i]));
-			stockhistory[i].pop();
-		}
-		while (stockhistory[0][0] == ns.stock.getPrice(stocknames[0])) {
-			await ns.sleep(500);
-		}
+		for (let i = 0; i < stocknames.length; i++) { stockhistory[i].unshift(ns.stock.getPrice(stocknames[i])); }
+		while (stockhistory[0][0] == ns.stock.getPrice(stocknames[0])) { await ns.sleep(500); }
 		updatecount++;
 		ns.print("WSE ticked, update " + updatecount + "/20");
 	}
@@ -32,17 +25,11 @@ export async function main(ns: NS): Promise<void> {
 			stockhistory[i].unshift(stockprice);
 			stockhistory[i].pop();
 			let avcalc = [0, 0, 0];
-			for (let j = 0; j < 5; j++) {
-				avcalc[0] = avcalc[0] + stockhistory[i][j];
-			}
+			for (let j = 0; j < 5; j++) { avcalc[0] = avcalc[0] + stockhistory[i][j]; }
 			avcalc[0] = avcalc[0] / 5;
-			for (let j = 0; j < 10; j++) {
-				avcalc[1] = avcalc[1] + stockhistory[i][j];
-			}
+			for (let j = 0; j < 10; j++) { avcalc[1] = avcalc[1] + stockhistory[i][j]; }
 			avcalc[1] = avcalc[1] / 10;
-			for (let j = 10; j < 20; j++) {
-				avcalc[2] = avcalc[2] + stockhistory[i][j];
-			}
+			for (let j = 10; j < 20; j++) { avcalc[2] = avcalc[2] + stockhistory[i][j]; }
 			avcalc[2] = avcalc[2] / 10;
 			hottrend = (100 * (avcalc[0] / avcalc[2])) - 100;
 			newtrend = (100 * (avcalc[1] / avcalc[2])) - 100;
@@ -74,8 +61,6 @@ export async function main(ns: NS): Promise<void> {
 				}
 			}
 		}
-		while (stockhistory[0][0] == ns.stock.getPrice(stocknames[0])) {
-			await ns.sleep(500);
-		}
+		while (stockhistory[0][0] == ns.stock.getPrice(stocknames[0])) { await ns.sleep(500); }
 	}
 }
