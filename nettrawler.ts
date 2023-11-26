@@ -21,7 +21,6 @@ export async function main(ns: NS): Promise<void> {
 					if (ns.hasRootAccess(scantarg) && ns.getServerRequiredHackingLevel(scantarg) <= ns.getHackingLevel() && !ns.getServer(scantarg).backdoorInstalled) {
 						await ns.singularity.installBackdoor();
 					}
-					ns.scp(ns.ls(scantarg, ".lit"), "home", scantarg);
 					ns.singularity.connect(currentserver);
 				}
 			}

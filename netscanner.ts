@@ -15,6 +15,7 @@ export async function main(ns: NS): Promise<void> {
 			if (!scanservers.includes(scantarg) && !knownservers.includes(scantarg) && !excludedservers.includes(scantarg)) {
 				scanservers.push(scantarg);
 				servermap.push([scantarg, currentserver]);
+				ns.scp(ns.ls(scantarg, ".lit"), "home", scantarg);
 			}
 		}
 		scanservers = scanservers.slice(1);
