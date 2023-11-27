@@ -44,23 +44,23 @@ export async function main(ns: NS): Promise<void> {
 				purchasecount = Math.min(purchasecount, ns.stock.getMaxShares(stocksym));
 				if (hottrend > pricedev) {
 					ns.print(stocksym + " hot: %" + ns.formatNumber(hottrend));
-					ns.print("purchase of " + purchasecount + " stocks at $" + Math.trunc(stockprice));
+					ns.print("purchase of " + purchasecount + " long stocks at $" + Math.trunc(stockprice));
 					ns.stock.buyStock(stocksym, purchasecount);
 				} else if (newtrend > pricedev) {
 					ns.print(stocksym + " new: %" + ns.formatNumber(newtrend));
-					ns.print("purchase of " + purchasecount + " stocks at $" + Math.trunc(stockprice));
+					ns.print("purchase of " + purchasecount + " long stocks at $" + Math.trunc(stockprice));
 					ns.stock.buyStock(stocksym, purchasecount);
 				}
 			} else if (stockposition[0] > 0) {
 				let salecount = stockposition[0];
 				if (hottrend < (-1 * pricedev)) {
 					ns.print(stocksym + " hot: %" + ns.formatNumber(hottrend));
-					ns.print("sale of " + salecount + " at $" + Math.trunc(stockprice));
+					ns.print("sale of " + salecount + " long stocks at $" + Math.trunc(stockprice));
 					ns.print("profit: $" + ns.formatNumber(ns.stock.getSaleGain(stocksym, salecount, "Long")));
 					ns.stock.sellStock(stocksym, salecount);
 				} else if (newtrend < (-1 * pricedev)) {
 					ns.print(stocksym + " new: %" + ns.formatNumber(newtrend));
-					ns.print("sale of " + salecount + " at $" + Math.trunc(stockprice));
+					ns.print("sale of " + salecount + " long stocks at $" + Math.trunc(stockprice));
 					ns.print("profit: $" + ns.formatNumber(ns.stock.getSaleGain(stocksym, salecount, "Long")));
 					ns.stock.sellStock(stocksym, salecount);
 				}
@@ -71,23 +71,23 @@ export async function main(ns: NS): Promise<void> {
 					purchasecount = Math.min(purchasecount, ns.stock.getMaxShares(stocksym));
 					if (hottrend < (-1 * pricedev)) {
 						ns.print(stocksym + " hot: %" + ns.formatNumber(hottrend));
-						ns.print("purchase of " + purchasecount + " stocks at $" + Math.trunc(stockprice));
+						ns.print("purchase of " + purchasecount + " short stocks at $" + Math.trunc(stockprice));
 						ns.stock.sellShort(stocksym, purchasecount);
 					} else if (newtrend < (-1 * pricedev)) {
 						ns.print(stocksym + " new: %" + ns.formatNumber(newtrend));
-						ns.print("purchase of " + purchasecount + " stocks at $" + Math.trunc(stockprice));
+						ns.print("purchase of " + purchasecount + " short stocks at $" + Math.trunc(stockprice));
 						ns.stock.buyShort(stocksym, purchasecount);
 					}
 				} else if (stockposition[3] > 0) {
 					let salecount = stockposition[3];
 					if (hottrend > pricedev) {
 						ns.print(stocksym + " hot: %" + ns.formatNumber(hottrend));
-						ns.print("sale of " + salecount + " at $" + Math.trunc(stockprice));
+						ns.print("sale of " + salecount + " short stocks at $" + Math.trunc(stockprice));
 						ns.print("profit: $" + ns.formatNumber(ns.stock.getSaleGain(stocksym, salecount, "Short")));
 						ns.stock.sellShort(stocksym, salecount);
 					} else if (newtrend > pricedev) {
 						ns.print(stocksym + " new: %" + ns.formatNumber(newtrend));
-						ns.print("sale of " + salecount + " at $" + Math.trunc(stockprice));
+						ns.print("sale of " + salecount + " short stocks at $" + Math.trunc(stockprice));
 						ns.print("profit: $" + ns.formatNumber(ns.stock.getSaleGain(stocksym, salecount, "Short")));
 						ns.stock.sellShort(stocksym, salecount);
 					}
