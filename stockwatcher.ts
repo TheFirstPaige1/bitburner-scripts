@@ -5,6 +5,11 @@ export async function main(ns: NS): Promise<void> {
 	const pricedev = 2;
 	const moneybuffer = 1000000;
 	const stocknames = ns.stock.getSymbols();
+	let canshort = false;
+	if (ns.fileExists("sourcefiles.txt", "home")) {
+		let bitnodes = JSON.parse(ns.read("sourcefiles.txt"));
+		if (bitnodes[0] == 8 || bitnodes[8] > 1) { canshort = true; }
+	}
 	let stockhistory = [];
 	for (let i = 0; i < stocknames.length; i++) { stockhistory.push([] as Array<number>); }
 	let updatecount = 0;
@@ -58,6 +63,34 @@ export async function main(ns: NS): Promise<void> {
 					ns.print("sale of " + salecount + " at $" + Math.trunc(stockprice));
 					ns.print("profit: $" + ns.formatNumber(ns.stock.getSaleGain(stocksym, salecount, "Long")));
 					ns.stock.sellStock(stocksym, salecount);
+				}
+			}
+			if (canshort) {
+				if (stockposition[3] == 0 && spendingmoney > moneybuffer) {
+					let purchasecount = Math.trunc(spendingmoney / stockprice);
+					purchasecount = Math.min(purchasecount, ns.stock.getMaxShares(stocksym));
+					if (hottrend < (-1 * pricedev)) {
+						ns.print(stocksym + " hot: %" + ns.formatNumber(hottrend));
+						ns.print("purchase of " + purchasecount + " stocks at $" + Math.trunc(stockprice));
+						ns.stock.sellShort(stocksym, purchasecount);
+					} else if (newtrend < (-1 * pricedev)) {
+						ns.print(stocksym + " new: %" + ns.formatNumber(newtrend));
+						ns.print("purchase of " + purchasecount + " stocks at $" + Math.trunc(stockprice));
+						ns.stock.buyShort(stocksym, purchasecount);
+					}
+				} else if (stockposition[3] > 0) {
+					let salecount = stockposition[3];
+					if (hottrend > pricedev) {
+						ns.print(stocksym + " hot: %" + ns.formatNumber(hottrend));
+						ns.print("sale of " + salecount + " at $" + Math.trunc(stockprice));
+						ns.print("profit: $" + ns.formatNumber(ns.stock.getSaleGain(stocksym, salecount, "Short")));
+						ns.stock.sellShort(stocksym, salecount);
+					} else if (newtrend > pricedev) {
+						ns.print(stocksym + " new: %" + ns.formatNumber(newtrend));
+						ns.print("sale of " + salecount + " at $" + Math.trunc(stockprice));
+						ns.print("profit: $" + ns.formatNumber(ns.stock.getSaleGain(stocksym, salecount, "Short")));
+						ns.stock.sellShort(stocksym, salecount);
+					}
 				}
 			}
 		}
