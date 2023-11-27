@@ -1,9 +1,9 @@
 import { NS } from "@ns";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
-	ns.print("populating masterlist...");
 	let formsexe = ns.fileExists("Formulas.exe", "home");
 	let masterlist = ["home"];
+	ns.print("populating masterlist...");
 	for (const scantarg of masterlist) {
 		let workinglist = ns.scan(scantarg);
 		for (const target of workinglist) {
@@ -13,7 +13,6 @@ export async function main(ns: NS): Promise<void> {
 			}
 		}
 	}
-	masterlist = masterlist.slice(1);
 	ns.print("killing old subscripts...");
 	for (const target of masterlist) {
 		ns.scriptKill("manhack.js", target);
@@ -54,10 +53,11 @@ export async function main(ns: NS): Promise<void> {
 			if (!ns.isRunning(pidList[i])) {
 				let moneyThresh = moneyList[i];
 				let securityThresh = securityList[i];
-				let mostfreeram = 0;
 				let ramserver = ramlist[0];
-				for (let m = 0; m < ramlist.length; m++) {
-					let freeram = ns.getServerMaxRam(ramlist[m]) - ns.getServerUsedRam(ramlist[m]);
+				let freeram = ns.getServerMaxRam(ramserver) - ns.getServerUsedRam(ramserver);
+				let mostfreeram = Math.min(Math.trunc(freeram * 0.75), Math.max(0, freeram - 16));
+				for (let m = 1; m < ramlist.length; m++) {
+					freeram = ns.getServerMaxRam(ramlist[m]) - ns.getServerUsedRam(ramlist[m]);
 					if (freeram > mostfreeram) {
 						mostfreeram = freeram;
 						ramserver = ramlist[m];
@@ -67,7 +67,7 @@ export async function main(ns: NS): Promise<void> {
 				if (ns.getServerSecurityLevel(target) > securityThresh) {
 					let weakengoal = ns.getServerSecurityLevel(target) - ns.getServerMinSecurityLevel(target);
 					let threadcount = 1;
-					while (ns.weakenAnalyze(threadcount) < weakengoal) { threadcount++; }
+					while (ns.weakenAnalyze(threadcount, ns.getServer(ramserver).cpuCores) < weakengoal) { threadcount++; }
 					threadcount = Math.min(threadcount, maxthreads);
 					if (formsexe) {
 						timerlist[i] = ns.formulas.hacking.weakenTime(ns.getServer(target), ns.getPlayer());
@@ -79,10 +79,10 @@ export async function main(ns: NS): Promise<void> {
 					let threadcount = 1;
 					if (ns.getServerMoneyAvailable(target) < 10) { threadcount = maxthreads; }
 					else {
-						if (formsexe) { threadcount = ns.formulas.hacking.growThreads(ns.getServer(target), ns.getPlayer(), Infinity); }
+						if (formsexe) { threadcount = ns.formulas.hacking.growThreads(ns.getServer(target), ns.getPlayer(), Infinity, ns.getServer(ramserver).cpuCores); }
 						else {
 							let growthgoal = ns.getServerMaxMoney(target) / ns.getServerMoneyAvailable(target);
-							threadcount = Math.ceil(ns.growthAnalyze(target, growthgoal));
+							threadcount = Math.ceil(ns.growthAnalyze(target, growthgoal, ns.getServer(ramserver).cpuCores));
 						}
 						threadcount = Math.min(maxthreads, threadcount);
 					}
@@ -121,7 +121,6 @@ export async function main(ns: NS): Promise<void> {
 		}
 		if (loopcount > 24) {
 			ns.print("updating masterlist...");
-			masterlist.unshift("home");
 			for (const scantarg of masterlist) {
 				let workinglist = ns.scan(scantarg);
 				for (const target of workinglist) {
@@ -131,7 +130,6 @@ export async function main(ns: NS): Promise<void> {
 					}
 				}
 			}
-			masterlist = masterlist.slice(1);
 			ns.print("updating RAM servers...");
 			for (const target of masterlist) {
 				if (!ramlist.includes(target)) {
