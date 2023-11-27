@@ -8,75 +8,64 @@ export async function main(ns: NS): Promise<void> {
 		let bitnodes = JSON.parse(ns.read("sourcefiles.txt"));
 		if (bitnodes[0] == 9 || bitnodes[9] > 0) { hackservs = true; }
 	}
-	while (running == true) {
-		let cdex = 0;
-		let clevelnode = 0;
-		let cramnode = 0;
-		let ccorenode = 0;
-		let chashnode = 0;
-		let ccost = Infinity;
+	//let formsexe = ns.fileExists("Formulas.exe", "home");
+	while (running) {
+		let costarray = [];
+		let newcost = Infinity;
 		if (ns.hacknet.numNodes() < ns.hacknet.maxNumNodes()) {
-			ccost = ns.hacknet.getPurchaseNodeCost();
-			cdex = 0;
+			newcost = ns.hacknet.getPurchaseNodeCost();
 		}
 		for (let i = 0; i < ns.hacknet.numNodes(); i++) {
-			if (ns.hacknet.getLevelUpgradeCost(i) < ccost) {
-				ccost = ns.hacknet.getLevelUpgradeCost(i);
-				clevelnode = i;
-				cdex = 1;
+			let upgarray = [0, 0, 0, 0];
+			upgarray[0] = ns.hacknet.getLevelUpgradeCost(i);
+			upgarray[1] = ns.hacknet.getRamUpgradeCost(i);
+			upgarray[2] = ns.hacknet.getCoreUpgradeCost(i);
+			if (hackservs) {
+				upgarray[3] = ns.hacknet.getCacheUpgradeCost(i);
+			} else {
+				upgarray[3] = Infinity;
+			}
+			costarray.push(upgarray);
+		}
+		//if (formsexe) {
+			//iterate over the array to adjust costs for effectiveness of income increase
+			//later, when can be assed
+		//}
+		let nextdex = [-1, -1, newcost];
+		for (let i = 0; i < costarray.length; i++) {
+			let hnode = costarray[i];
+			for (let j = 0; j < hnode.length; j++) {
+				if (hnode[j] < nextdex[2]) { nextdex = [i, j, hnode[j]]; }
 			}
 		}
-		for (let i = 0; i < ns.hacknet.numNodes(); i++) {
-			if (ns.hacknet.getRamUpgradeCost(i) < ccost) {
-				ccost = ns.hacknet.getRamUpgradeCost(i);
-				cramnode = i;
-				cdex = 2;
-			}
-		}
-		for (let i = 0; i < ns.hacknet.numNodes(); i++) {
-			if (ns.hacknet.getCoreUpgradeCost(i) < ccost) {
-				ccost = ns.hacknet.getCoreUpgradeCost(i);
-				ccorenode = i;
-				cdex = 3;
-			}
-		}
-		if (hackservs) {
-			for (let i = 0; i < ns.hacknet.numNodes(); i++) {
-				if (ns.hacknet.getCacheUpgradeCost(i) < ccost) {
-					ccost = ns.hacknet.getCacheUpgradeCost(i);
-					chashnode = i;
-					cdex = 4;
-				}
-			}
-		}
-		ns.print("Next cost is $" + ns.formatNumber(ccost));
-		while (ns.getServerMoneyAvailable("home") < ccost) {
+		ns.print("Next cost is $" + ns.formatNumber(nextdex[2]));
+		while (ns.getServerMoneyAvailable("home") < nextdex[2]) {
 			if (hackservs && ns.hacknet.numHashes() > ns.hacknet.hashCost("Sell for Money")) {
 				ns.hacknet.spendHashes("Sell for Money");
 			}
 			await ns.sleep(1000);
 		}
-		switch (cdex) {
-			case 0:
+		switch (nextdex[1]) {
+			case -1:
 				ns.hacknet.purchaseNode();
-				ns.print("Expanding Hacknet at cost $" + ns.formatNumber(ccost));
+				ns.print("Expanding Hacknet");
+				break;
+			case 0:
+				ns.hacknet.upgradeLevel(nextdex[0]);
+				ns.print("Upgrading " + ns.hacknet.getNodeStats(nextdex[0]).name + " level");
 				break;
 			case 1:
-				ns.hacknet.upgradeLevel(clevelnode);
-				ns.print("Upgrading " + ns.hacknet.getNodeStats(clevelnode).name + " level");
+				ns.hacknet.upgradeRam(nextdex[0]);
+				ns.print("Upgrading " + ns.hacknet.getNodeStats(nextdex[0]).name + " RAM");
 				break;
 			case 2:
-				ns.hacknet.upgradeRam(cramnode);
-				ns.print("Upgrading " + ns.hacknet.getNodeStats(cramnode).name + " RAM");
+				ns.hacknet.upgradeCore(nextdex[0]);
+				ns.print("Upgrading " + ns.hacknet.getNodeStats(nextdex[0]).name + " core");
 				break;
 			case 3:
-				ns.hacknet.upgradeCore(ccorenode);
-				ns.print("Upgrading " + ns.hacknet.getNodeStats(ccorenode).name + " core");
-				break;
-			case 4:
-				ns.hacknet.upgradeCache(chashnode);
-				ns.print("Upgrading " + ns.hacknet.getNodeStats(chashnode).name + " cache");
+				ns.hacknet.upgradeCache(nextdex[0]);
+				ns.print("Upgrading " + ns.hacknet.getNodeStats(nextdex[0]).name + " cache");
 		}
-		if (ccost == Infinity) { running = false; }
+		if (nextdex[2] == Infinity) { running = false; }
 	}
 }
