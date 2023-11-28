@@ -13,12 +13,14 @@ Current scripts and their functions:
 
 - nettrawler - iterates over the network and hacks and backdoors as many as possible, also copies .lit files to home
 - darkweb - buys the TOR browser and then each hacking program in turn
+- autoprogram - an cheaper and slower alternate to darkweb, codes the programs in turn, useful for int exp
 - sourcefiler - creates a txt file with the current source files owned including the currently accessed node
 - listaugs - prints to the log all unowned and faction available augments filtered by a list of desireable stats, awaiting further work
 
 - stockwatcher - automated stock market buyer/seller, doesn't require or use the 4S market data
 - bailwse - kills stockwatcher and sells all stocks, for when you want to stop trading
 
+- autoshurg - WIP automated corporation handler
 - sharesbuyback - a script that'll automatically buy back as many shares as you can afford every minute until they're all purchased
 
 - totalhack - a single-instance hack manager that dynamically allocates RAM and periodically updates as new servers are hackable, always run on home, relies on manhack, manweaken, and mangrow subscripts

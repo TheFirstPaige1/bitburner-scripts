@@ -1,6 +1,7 @@
 import { NS } from "@ns";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
+	ns.tail();
 	let formsexe = ns.fileExists("Formulas.exe", "home");
 	let masterlist = ["home"];
 	ns.print("populating masterlist...");
@@ -51,11 +52,9 @@ export async function main(ns: NS): Promise<void> {
 		for (let i = 0; i < targetList.length; i++) {
 			let target = targetList[i];
 			if (!ns.isRunning(pidList[i])) {
-				let moneyThresh = moneyList[i];
-				let securityThresh = securityList[i];
 				let ramserver = ramlist[0];
-				let freeram = ns.getServerMaxRam(ramserver) - ns.getServerUsedRam(ramserver);
-				let mostfreeram = Math.min(Math.trunc(freeram * 0.75), Math.max(0, freeram - 16));
+				let freeram = Math.max(0, ns.getServerMaxRam(ramserver) - ns.getServerUsedRam(ramserver) - Math.max(Math.trunc(ns.getServerMaxRam(ramserver) / 4), 16));
+				let mostfreeram = freeram;
 				for (let m = 1; m < ramlist.length; m++) {
 					freeram = ns.getServerMaxRam(ramlist[m]) - ns.getServerUsedRam(ramlist[m]);
 					if (freeram > mostfreeram) {
@@ -64,6 +63,8 @@ export async function main(ns: NS): Promise<void> {
 					}
 				}
 				let maxthreads = Math.trunc(mostfreeram / 2);
+				let moneyThresh = moneyList[i];
+				let securityThresh = securityList[i];
 				if (ns.getServerSecurityLevel(target) > securityThresh) {
 					let weakengoal = ns.getServerSecurityLevel(target) - ns.getServerMinSecurityLevel(target);
 					let threadcount = 1;
