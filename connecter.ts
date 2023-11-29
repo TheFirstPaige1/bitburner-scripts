@@ -10,10 +10,7 @@ export async function main(ns: NS): Promise<void> {
 			netpath.unshift(networkmap[i][1]);
 		}
 	}
-	if (netpath.length > 10) {
-		ns.tprint(netpath.slice(0, 9));
-		ns.tprint(netpath.slice(10));
-	} else {
-		ns.tprint(netpath);
+	for (let i = 0; i < netpath.length; i++) {
+		ns.tprint(i + ":" + netpath[i]);
 	}
 }
