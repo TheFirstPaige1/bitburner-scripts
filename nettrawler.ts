@@ -19,6 +19,7 @@ export async function main(ns: NS): Promise<void> {
 						for (const fn of [ns.brutessh, ns.ftpcrack, ns.relaysmtp, ns.httpworm, ns.sqlinject, ns.nuke]) try { fn(scantarg) } catch { }
 					}
 					if (ns.hasRootAccess(scantarg) && ns.getServerRequiredHackingLevel(scantarg) <= ns.getHackingLevel() && !ns.getServer(scantarg).backdoorInstalled) {
+						ns.tprint("Backdooring " + scantarg + ", please wait!");
 						await ns.singularity.installBackdoor();
 					}
 					ns.singularity.connect(currentserver);
@@ -27,4 +28,5 @@ export async function main(ns: NS): Promise<void> {
 		}
 		scanservers = scanservers.slice(1);
 	}
+	ns.singularity.connect("home");
 }

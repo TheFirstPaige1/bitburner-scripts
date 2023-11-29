@@ -40,7 +40,7 @@ export async function main(ns: NS): Promise<void> {
 		}
 		ns.print("Next cost is $" + ns.formatNumber(nextdex[2]));
 		while (ns.getServerMoneyAvailable("home") < nextdex[2]) {
-			if (hackservs && ns.hacknet.numHashes() > ns.hacknet.hashCost("Sell for Money")) {
+			if (hackservs && (ns.hacknet.numHashes() > ns.hacknet.hashCost("Sell for Money"))) {
 				ns.hacknet.spendHashes("Sell for Money");
 			}
 			await ns.sleep(1000);
