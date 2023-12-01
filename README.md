@@ -2,6 +2,8 @@
 Scripts for BitBurner 2.5.1
 
 Current scripts and their functions:
+- bitlib - library script containing functions used in other scripts
+
 - autodeploy - outdated and functionally replaced with totalrestart, will rework unto a unified script handler at Some PointTM
 - hackman - deprecated, replaced with totalhack
 

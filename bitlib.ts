@@ -18,9 +18,9 @@ function updateSourceFiles(ns: NS) {
 
 /**
  * Checks for if source file requirements are met, by either being in a node or owning a source file.
- * Will always return false if sourcefiles.txt doesn't exist.
+ * Cannot check source files if sourcefiles.txt doesn't exist and will only check current node.
  * Only call on functions being ran on home, or it'll look in the wrong place for the text file.
- * RAM cost: 0.1 GB
+ * RAM cost: 1.1 GB
  * @param ns BitBurner NS object
  * @param node number of BitNode being checked for, must be between 1 and 13
  * @param level level of source file being checked for
@@ -31,7 +31,10 @@ export function sourceCheck(ns: NS, node: number, level: number): boolean {
 		const bitnodes = JSON.parse(ns.read("sourcefiles.txt"));
 		if (bitnodes[0] == node || bitnodes[node] >= level) { return true; }
 		else { return false; }
-	} else { return false; }
+	} else {
+		if (node == ns.getResetInfo().currentNode) { return true; }
+		else { return false; }
+	}
 }
 
 /**

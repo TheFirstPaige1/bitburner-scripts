@@ -1,11 +1,8 @@
 import { NS } from "@ns";
 import { Multipliers } from "@ns";
+import { sourceCheck } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
-	let gangs = false;
-	if (ns.fileExists("sourcefiles.txt", "home")) {
-		let bitnodes = JSON.parse(ns.read("sourcefiles.txt"));
-		if (bitnodes[0] == 2 || bitnodes[2] > 0) { gangs = true; }
-	}
+	let gangs = sourceCheck(ns, 2, 1);
 	const combat = ns.args[0];
 	const desiredstats: (keyof Multipliers)[] = ["charisma", "charisma_exp", "company_rep", "faction_rep", "hacking", "hacking_chance",
 		"hacking_exp", "hacking_grow", "hacking_money", "hacking_speed", "hacknet_node_money"];
