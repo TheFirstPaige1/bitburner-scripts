@@ -1,4 +1,5 @@
 import { NS } from "@ns";
+import { popTheHood } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
 	ns.tail();
@@ -9,8 +10,7 @@ export async function main(ns: NS): Promise<void> {
 		let workinglist = ns.scan(scantarg);
 		for (const target of workinglist) {
 			if (!masterlist.includes(target)) {
-				for (const fn of [ns.brutessh, ns.ftpcrack, ns.relaysmtp, ns.httpworm, ns.sqlinject, ns.nuke]) try { fn(target) } catch { }
-				if (ns.hasRootAccess(target)) { masterlist.push(target); }
+				if (popTheHood(ns, target)) { masterlist.push(target); }
 			}
 		}
 	}
@@ -126,8 +126,7 @@ export async function main(ns: NS): Promise<void> {
 				let workinglist = ns.scan(scantarg);
 				for (const target of workinglist) {
 					if (!masterlist.includes(target)) {
-						for (const fn of [ns.brutessh, ns.ftpcrack, ns.relaysmtp, ns.httpworm, ns.sqlinject, ns.nuke]) try { fn(target) } catch { }
-						if (ns.hasRootAccess(target)) { masterlist.push(target); }
+						if (popTheHood(ns, target)) { masterlist.push(target); }
 					}
 				}
 			}

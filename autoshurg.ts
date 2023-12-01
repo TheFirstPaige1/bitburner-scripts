@@ -1,19 +1,13 @@
-import { CityName, NS } from "@ns";
+import { NS } from "@ns";
+import { sourceCheck } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
 	const corpname = "Shurg Industries";
 	const agriname = "Shurg Monocultural";
 	const tobaname = "Shurg Tamacco";
 	const citynames = ["Sector-12", "Aevum", "Chongqing", "New Tokyo", "Ishima", "Volhaven"];
-	let fullapi = false;
-	let selffund = true;
-	if (ns.fileExists("sourcefiles.txt", "home")) {
-		let bitnodes = JSON.parse(ns.read("sourcefiles.txt"));
-		if (bitnodes[0] == 3 || bitnodes[3] > 2) {
-			fullapi = true;
-			if (bitnodes[0] == 3) { selffund = false; }
-		}
-	}
+	let fullapi = sourceCheck(ns, 3, 3);
+	let selffund = ns.getResetInfo().currentNode != 3;
 	let investcycle = ns.corporation.getInvestmentOffer().round;
 	if (!ns.corporation.hasCorporation()) { while (!ns.corporation.createCorporation(corpname, selffund)) { await ns.sleep(60000); } }
 	if (!ns.corporation.getCorporation().divisions.includes(agriname)) { ns.corporation.expandIndustry("Agriculture", agriname); }
