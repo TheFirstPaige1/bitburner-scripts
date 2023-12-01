@@ -17,8 +17,11 @@ export async function main(ns: NS): Promise<void> {
 					scanservers.push(scantarg);
 					ns.singularity.connect(scantarg);
 					if (popTheHood(ns, scantarg) && ns.getServerRequiredHackingLevel(scantarg) <= ns.getHackingLevel() && !ns.getServer(scantarg).backdoorInstalled) {
-						ns.tprint("Backdooring " + scantarg + ", please wait!");
-						await ns.singularity.installBackdoor();
+						//ns.tprint("Backdooring " + scantarg + ", please wait!");
+						//await ns.singularity.installBackdoor();
+						ns.scp("mandoor.js", scantarg, "home");
+						ns.exec("mandoor.js", scantarg);
+						await ns.sleep(1);
 					}
 					ns.singularity.connect(currentserver);
 				}
@@ -26,6 +29,6 @@ export async function main(ns: NS): Promise<void> {
 		}
 		scanservers = scanservers.slice(1);
 	}
-	ns.tprint("Done!");
+	//ns.tprint("Done!");
 	ns.singularity.connect("home");
 }
