@@ -1,5 +1,5 @@
 # bitburner-scripts
-Scripts for BitBurner 2.5.0
+Scripts for BitBurner 2.5.1
 
 Current scripts and their functions:
 - autodeploy - outdated and functionally replaced with totalrestart, will rework unto a unified script handler at Some PointTM

@@ -16,7 +16,7 @@ export async function main(ns: NS): Promise<void> {
 	ns.print("building stock price history for 20 updates");
 	while (updatecount < 20) {
 		for (let i = 0; i < stocknames.length; i++) { stockhistory[i].unshift(ns.stock.getPrice(stocknames[i])); }
-		while (stockhistory[0][0] == ns.stock.getPrice(stocknames[0])) { await ns.sleep(500); }
+		await ns.stock.nextUpdate();
 		updatecount++;
 		ns.print("WSE ticked, update " + updatecount + "/20");
 	}
@@ -94,6 +94,6 @@ export async function main(ns: NS): Promise<void> {
 				}
 			}
 		}
-		while (stockhistory[0][0] == ns.stock.getPrice(stocknames[0])) { await ns.sleep(500); }
+		await ns.stock.nextUpdate();
 	}
 }
