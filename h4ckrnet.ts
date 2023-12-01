@@ -3,9 +3,9 @@ import { sourceCheck } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
 	ns.tail();
-	let running = true;
-	let hackservs = sourceCheck(ns, 9, 0);
+	const hackservs = sourceCheck(ns, 9, 0);
 	//let formsexe = ns.fileExists("Formulas.exe", "home");
+	let running = true;
 	while (running) {
 		let costarray = [];
 		let newcost = Infinity;

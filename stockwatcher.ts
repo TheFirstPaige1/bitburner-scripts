@@ -1,15 +1,12 @@
 import { NS } from "@ns";
+import { sourceCheck } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
 	ns.tail();
 	const pricedev = 2;
 	const moneybuffer = 1000000;
 	const stocknames = ns.stock.getSymbols();
-	let canshort = false;
-	if (ns.fileExists("sourcefiles.txt", "home")) {
-		let bitnodes = JSON.parse(ns.read("sourcefiles.txt"));
-		if (bitnodes[0] == 8 || bitnodes[8] > 1) { canshort = true; }
-	}
+	const canshort = sourceCheck(ns, 8, 2);
 	let stockhistory = [];
 	for (let i = 0; i < stocknames.length; i++) { stockhistory.push([] as Array<number>); }
 	let updatecount = 0;

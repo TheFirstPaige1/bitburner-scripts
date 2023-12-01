@@ -2,7 +2,7 @@ import { NS } from "@ns";
 import { Multipliers } from "@ns";
 import { sourceCheck } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
-	let gangs = sourceCheck(ns, 2, 1);
+	const gangs = sourceCheck(ns, 2, 1);
 	const combat = ns.args[0];
 	const desiredstats: (keyof Multipliers)[] = ["charisma", "charisma_exp", "company_rep", "faction_rep", "hacking", "hacking_chance",
 		"hacking_exp", "hacking_grow", "hacking_money", "hacking_speed", "hacknet_node_money"];
@@ -23,6 +23,8 @@ export async function main(ns: NS): Promise<void> {
 			}
 		}
 	}
+	ns.tprint(auglist.toString());
+	//below here doesn't work for some reason
 	let sortedlist = [];
 	while (auglist.length > 0) {
 		let highdex = 0;
@@ -38,6 +40,14 @@ export async function main(ns: NS): Promise<void> {
 	}
 	if (gangs && ns.gang.inGang()) {
 		sortedlist = sortedlist.filter(aug => !ns.singularity.getAugmentationsFromFaction(ns.gang.getGangInformation().faction).includes(aug));
+		let uniquefacts = [] as Array<string>;
+		for (const aug of sortedlist) {
+			let augfacts = ns.singularity.getAugmentationFactions(aug);
+			for (const fac of augfacts) {
+				if (!uniquefacts.includes(fac)) { uniquefacts.push(fac); }
+			}
+		}
+		ns.tprint(uniquefacts.toString());
 	}
 	ns.tprint(sortedlist.toString());
 	//TODO:

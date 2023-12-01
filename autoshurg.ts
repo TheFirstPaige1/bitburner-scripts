@@ -6,8 +6,8 @@ export async function main(ns: NS): Promise<void> {
 	const agriname = "Shurg Monocultural";
 	const tobaname = "Shurg Tamacco";
 	const citynames = ["Sector-12", "Aevum", "Chongqing", "New Tokyo", "Ishima", "Volhaven"];
-	let fullapi = sourceCheck(ns, 3, 3);
-	let selffund = ns.getResetInfo().currentNode != 3;
+	const fullapi = sourceCheck(ns, 3, 3);
+	const selffund = ns.getResetInfo().currentNode != 3;
 	let investcycle = ns.corporation.getInvestmentOffer().round;
 	if (!ns.corporation.hasCorporation()) { while (!ns.corporation.createCorporation(corpname, selffund)) { await ns.sleep(60000); } }
 	if (!ns.corporation.getCorporation().divisions.includes(agriname)) { ns.corporation.expandIndustry("Agriculture", agriname); }
