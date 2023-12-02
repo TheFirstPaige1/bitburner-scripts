@@ -1,29 +1,34 @@
 import { NS } from "@ns";
-import { popTheHood } from "./bitlib";
+import { masterLister } from "./bitlib";
 import { remoteConnect } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	let excludedservers = ns.getPurchasedServers();
 	for (let i = 0; i < ns.hacknet.numNodes(); i++) { excludedservers.push(ns.hacknet.getNodeStats(i).name); }
 	excludedservers.push("w0r1d_d43m0n");
 	excludedservers.push("darkweb");
-	let masterlist = ["home"];
-	for (const scantarg of masterlist) {
-		let workinglist = ns.scan(scantarg);
-		for (const target of workinglist) {
-			if (!masterlist.includes(target) && !excludedservers.includes(target)) {
-				if (popTheHood(ns, target)) { masterlist.push(target); }
-			}
-		}
-	}
-	let doorcount = 0;
+	let masterlist = masterLister(ns);
+	masterlist = masterlist.filter(server => !excludedservers.includes(server));
+	let doorcount = [];
 	for (const server of masterlist) {
 		if (ns.getServerRequiredHackingLevel(server) <= ns.getHackingLevel() && !ns.getServer(server).backdoorInstalled) {
 			remoteConnect(ns, server);
-			ns.exec("mandoor.js", "home");
+			doorcount.push(ns.exec("mandoor.js", "home"));
 			await ns.sleep(1);
-			doorcount++;
 		}
 	}
+	doorcount = doorcount.filter(door => door != 0);
+	let runningcount = 0;
+	for (const door of doorcount) { if (ns.isRunning(door)) { runningcount++; } }
 	ns.singularity.connect("home");
-	ns.tprint("attempting to backdoor " + doorcount + " servers...");
+	ns.tprint("attempting to backdoor " + doorcount.length + " servers...");
+	while (runningcount > 0) {
+		let oldcount = runningcount;
+		ns.tprint(runningcount + " remaining");
+		while (oldcount == runningcount) {
+			await ns.sleep(500);
+			runningcount = 0;
+			for (const door of doorcount) { if (ns.isRunning(door)) { runningcount++; } }
+		}
+	}
+	ns.tprint("done!");
 }

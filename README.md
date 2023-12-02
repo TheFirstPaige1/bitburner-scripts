@@ -4,6 +4,8 @@ Scripts for BitBurner 2.5.1
 Current scripts and their functions:
 - bitlib - library script containing functions used in other scripts
 
+- eval - runs any function passed to it as a string and prints the return value
+
 - h4ckrnet - buys up as many hacknet nodes and upgrades as it can, always purchasing the cheapest first
 - serverstager - buys as many private servers as possible at 2GB each, and then incrementally upgrades them in order until a limit is reached, pass a number as an argument to set a limit, now also automatically shares half the RAM where possible using the same method as servershare
 
