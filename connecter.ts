@@ -1,7 +1,8 @@
 import { NS } from "@ns";
+import { netScan } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	const target = ns.args[0] as string;
-	const networkmap = JSON.parse(ns.read("networkmap.txt"));
+	const networkmap = netScan(ns);
 	let next = target;
 	let netpath = [target];
 	for (let i = networkmap.length - 1; i > 0; i--) {

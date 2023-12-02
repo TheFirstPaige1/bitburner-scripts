@@ -1,5 +1,4 @@
 import { NS } from "@ns";
-import { popTheHood } from "./bitlib";
 import { masterLister } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');

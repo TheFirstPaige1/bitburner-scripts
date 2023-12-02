@@ -1,12 +1,11 @@
 import { NS } from "@ns";
-import { sourceCheck } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
 	const corpname = "Shurg Industries";
 	const agriname = "Shurg Monocultural";
 	const tobaname = "Shurg Tamacco";
 	const citynames = ["Sector-12", "Aevum", "Chongqing", "New Tokyo", "Ishima", "Volhaven"];
-	const fullapi = sourceCheck(ns, 3, 3);
+	const fullapi = (ns.corporation.hasUnlock("Warehouse API") && ns.corporation.hasUnlock("Office API"));
 	const selffund = ns.getResetInfo().currentNode != 3;
 	let investcycle = ns.corporation.getInvestmentOffer().round;
 	if (!ns.corporation.hasCorporation()) { while (!ns.corporation.createCorporation(corpname, selffund)) { await ns.sleep(60000); } }

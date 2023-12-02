@@ -1,9 +1,7 @@
 import { NS } from "@ns";
-import { sourceCheck } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
 	ns.tail();
-	const hackservs = sourceCheck(ns, 9, 0);
 	//let formsexe = ns.fileExists("Formulas.exe", "home");
 	let running = true;
 	while (running) {
@@ -17,11 +15,7 @@ export async function main(ns: NS): Promise<void> {
 			upgarray[0] = ns.hacknet.getLevelUpgradeCost(i);
 			upgarray[1] = ns.hacknet.getRamUpgradeCost(i);
 			upgarray[2] = ns.hacknet.getCoreUpgradeCost(i);
-			if (hackservs) {
-				upgarray[3] = ns.hacknet.getCacheUpgradeCost(i);
-			} else {
-				upgarray[3] = Infinity;
-			}
+			upgarray[3] = ns.hacknet.getCacheUpgradeCost(i);
 			costarray.push(upgarray);
 		}
 		//if (formsexe) {
@@ -37,7 +31,7 @@ export async function main(ns: NS): Promise<void> {
 		}
 		ns.print("Next cost is $" + ns.formatNumber(nextdex[2]));
 		while (ns.getServerMoneyAvailable("home") < nextdex[2]) {
-			if (hackservs && (ns.hacknet.numHashes() > ns.hacknet.hashCost("Sell for Money"))) {
+			if (ns.hacknet.numHashes() > ns.hacknet.hashCost("Sell for Money")) {
 				ns.hacknet.spendHashes("Sell for Money");
 			}
 			await ns.sleep(1000);
