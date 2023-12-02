@@ -99,6 +99,25 @@ export function remoteConnect(ns: NS, target: string) {
 	for (const next of netpath) { ns.singularity.connect(next); }
 }
 
+/**
+ * Creates an array of strings of names of all the servers with current or possible root access.
+ * RAM cost: 0.55 GB
+ * @param ns BitBurner NS object
+ * @returns an array of all root-accessable server name strings
+ */
+export function masterLister(ns: NS): Array<string> {
+	let masterlist = ["home"];
+	for (const scantarg of masterlist) {
+		let workinglist = ns.scan(scantarg);
+		for (const target of workinglist) {
+			if (!masterlist.includes(target)) {
+				if (popTheHood(ns, target)) { masterlist.push(target); }
+			}
+		}
+	}
+	return masterlist;
+}
+
 export async function main(ns: NS): Promise<void> {
 	updateSourceFiles(ns);
 	netScan(ns);

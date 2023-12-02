@@ -15,12 +15,15 @@ export async function main(ns: NS): Promise<void> {
 			}
 		}
 	}
+	let doorcount = 0;
 	for (const server of masterlist) {
 		if (ns.getServerRequiredHackingLevel(server) <= ns.getHackingLevel() && !ns.getServer(server).backdoorInstalled) {
 			remoteConnect(ns, server);
 			ns.exec("mandoor.js", "home");
 			await ns.sleep(1);
+			doorcount++;
 		}
 	}
 	ns.singularity.connect("home");
+	ns.tprint("attempting to backdoor " + doorcount + " servers...");
 }

@@ -1,53 +1,23 @@
 import { NS } from "@ns";
 import { popTheHood } from "./bitlib";
+import { masterLister } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
 	ns.tail();
 	let formsexe = ns.fileExists("Formulas.exe", "home");
-	let masterlist = ["home"];
-	ns.print("populating masterlist...");
-	for (const scantarg of masterlist) {
-		let workinglist = ns.scan(scantarg);
-		for (const target of workinglist) {
-			if (!masterlist.includes(target)) {
-				if (popTheHood(ns, target)) { masterlist.push(target); }
-			}
-		}
-	}
-	ns.print("killing old subscripts...");
-	for (const target of masterlist) {
-		ns.scriptKill("manhack.js", target);
-		ns.scriptKill("mangrow.js", target);
-		ns.scriptKill("manweaken.js", target);
-	}
-	ns.print("populating RAM servers...");
-	let ramlist = [];
-	for (const target of masterlist) {
-		if (ns.getServerMaxRam(target) > 0) {
-			ramlist.push(target);
-			ns.scp("manhack.js", target);
-			ns.scp("mangrow.js", target);
-			ns.scp("manweaken.js", target);
-		}
-	}
-	ns.print("populating hack servers...");
-	let targetList = [];
+	let masterlist = masterLister(ns);
+	for (const target of masterlist) { ns.scriptKill("manhack.js", target); }
+	let ramlist = masterlist.filter(server => ns.getServerMaxRam(server) > 0);
+	for (const target of ramlist) { ns.scp("manhack.js", target); }
+	let targetList = masterlist.filter(server => (ns.getServerRequiredHackingLevel(server) <= ns.getHackingLevel()) && (ns.getServerMaxMoney(server) > 0));
 	let moneyList = [];
 	let securityList = [];
-	for (const target of masterlist) {
-		if (ns.getServerRequiredHackingLevel(target) <= ns.getHackingLevel()) {
-			if (ns.getServerMaxMoney(target) > 0) {
-				targetList.push(target);
-				moneyList.push(ns.getServerMaxMoney(target) * 0.75);
-				securityList.push(ns.getServerMinSecurityLevel(target) + 5);
-			}
-		}
+	for (const target of targetList) {
+		moneyList.push(ns.getServerMaxMoney(target) * 0.75);
+		securityList.push(ns.getServerMinSecurityLevel(target) + 5);
 	}
-	ns.print("creating PID and timer arrays...");
 	let pidList = Array(targetList.length).fill(0);
 	let timerlist = Array(targetList.length).fill(0);
-	ns.print("beginning main loop");
-	let loopcount = 0;
 	while (true) {
 		for (let i = 0; i < targetList.length; i++) {
 			let target = targetList[i];
@@ -63,46 +33,48 @@ export async function main(ns: NS): Promise<void> {
 					}
 				}
 				let maxthreads = Math.trunc(mostfreeram / 2);
-				let moneyThresh = moneyList[i];
-				let securityThresh = securityList[i];
-				if (ns.getServerSecurityLevel(target) > securityThresh) {
-					let weakengoal = ns.getServerSecurityLevel(target) - ns.getServerMinSecurityLevel(target);
-					let threadcount = 1;
-					while (ns.weakenAnalyze(threadcount, ns.getServer(ramserver).cpuCores) < weakengoal) { threadcount++; }
-					threadcount = Math.min(threadcount, maxthreads);
-					if (formsexe) {
-						timerlist[i] = ns.formulas.hacking.weakenTime(ns.getServer(target), ns.getPlayer());
-						ns.print("weakening " + target + " for " + Math.trunc(timerlist[i]) + "ms");
-						ns.print("on " + ramserver + " with " + threadcount + " threads");
-					} else { ns.print("weakening " + target + " with " + threadcount + " threads on " + ramserver); }
-					pidList[i] = ns.exec("manweaken.js", ramserver, threadcount, target);
-				} else if (ns.getServerMoneyAvailable(target) < moneyThresh) {
-					let threadcount = 1;
-					if (ns.getServerMoneyAvailable(target) < 10) { threadcount = maxthreads; }
-					else {
-						if (formsexe) { threadcount = ns.formulas.hacking.growThreads(ns.getServer(target), ns.getPlayer(), Infinity, ns.getServer(ramserver).cpuCores); }
+				if (maxthreads > 0) {
+					let moneyThresh = moneyList[i];
+					let securityThresh = securityList[i];
+					if (ns.getServerSecurityLevel(target) > securityThresh) {
+						let weakengoal = ns.getServerSecurityLevel(target) - ns.getServerMinSecurityLevel(target);
+						let threadcount = 1;
+						while (ns.weakenAnalyze(threadcount, ns.getServer(ramserver).cpuCores) < weakengoal) { threadcount++; }
+						threadcount = Math.min(threadcount, maxthreads);
+						if (formsexe) {
+							timerlist[i] = ns.formulas.hacking.weakenTime(ns.getServer(target), ns.getPlayer());
+							ns.print("weakening " + target + " for " + Math.trunc(timerlist[i]) + "ms");
+							ns.print("on " + ramserver + " with " + threadcount + " threads");
+						} else { ns.print("weakening " + target + " with " + threadcount + " threads on " + ramserver); }
+						pidList[i] = ns.exec("manhack.js", ramserver, threadcount, 0, target);
+					} else if (ns.getServerMoneyAvailable(target) < moneyThresh) {
+						let threadcount = 1;
+						if (ns.getServerMoneyAvailable(target) < 10) { threadcount = maxthreads; }
 						else {
-							let growthgoal = ns.getServerMaxMoney(target) / ns.getServerMoneyAvailable(target);
-							threadcount = Math.ceil(ns.growthAnalyze(target, growthgoal, ns.getServer(ramserver).cpuCores));
+							if (formsexe) { threadcount = ns.formulas.hacking.growThreads(ns.getServer(target), ns.getPlayer(), Infinity, ns.getServer(ramserver).cpuCores); }
+							else {
+								let growthgoal = ns.getServerMaxMoney(target) / ns.getServerMoneyAvailable(target);
+								threadcount = Math.ceil(ns.growthAnalyze(target, growthgoal, ns.getServer(ramserver).cpuCores));
+							}
+							threadcount = Math.min(maxthreads, threadcount);
 						}
-						threadcount = Math.min(maxthreads, threadcount);
+						if (formsexe) {
+							timerlist[i] = ns.formulas.hacking.growTime(ns.getServer(target), ns.getPlayer());
+							ns.print("growing " + target + " for " + Math.trunc(timerlist[i]) + "ms");
+							ns.print("on " + ramserver + " with " + threadcount + " threads");
+						} else { ns.print("growing " + target + " with " + threadcount + " threads on " + ramserver); }
+						pidList[i] = ns.exec("manhack.js", ramserver, threadcount, 1, target);
+					} else {
+						let hackgoal = ns.getServerMaxMoney(target) - moneyThresh;
+						let threadcount = Math.ceil(ns.hackAnalyzeThreads(target, hackgoal));
+						threadcount = Math.min(threadcount, maxthreads);
+						if (formsexe) {
+							timerlist[i] = ns.formulas.hacking.hackTime(ns.getServer(target), ns.getPlayer());
+							ns.print("hacking " + target + " for " + Math.trunc(timerlist[i]) + "ms");
+							ns.print("on " + ramserver + " with " + threadcount + " threads");
+						} else { ns.print("hacking " + target + " with " + threadcount + " threads on " + ramserver); }
+						pidList[i] = ns.exec("manhack.js", ramserver, threadcount, 2, target);
 					}
-					if (formsexe) {
-						timerlist[i] = ns.formulas.hacking.growTime(ns.getServer(target), ns.getPlayer());
-						ns.print("growing " + target + " for " + Math.trunc(timerlist[i]) + "ms");
-						ns.print("on " + ramserver + " with " + threadcount + " threads");
-					} else { ns.print("growing " + target + " with " + threadcount + " threads on " + ramserver); }
-					pidList[i] = ns.exec("mangrow.js", ramserver, threadcount, target);
-				} else {
-					let hackgoal = ns.getServerMaxMoney(target) - moneyThresh;
-					let threadcount = Math.ceil(ns.hackAnalyzeThreads(target, hackgoal));
-					threadcount = Math.min(threadcount, maxthreads);
-					if (formsexe) {
-						timerlist[i] = ns.formulas.hacking.hackTime(ns.getServer(target), ns.getPlayer());
-						ns.print("hacking " + target + " for " + Math.trunc(timerlist[i]) + "ms");
-						ns.print("on " + ramserver + " with " + threadcount + " threads");
-					} else { ns.print("hacking " + target + " with " + threadcount + " threads on " + ramserver); }
-					pidList[i] = ns.exec("manhack.js", ramserver, threadcount, target);
 				}
 			}
 		}
@@ -120,29 +92,16 @@ export async function main(ns: NS): Promise<void> {
 				else { looping = false; }
 			}
 		}
-		if (loopcount > 24) {
-			ns.print("updating masterlist...");
-			for (const scantarg of masterlist) {
-				let workinglist = ns.scan(scantarg);
-				for (const target of workinglist) {
-					if (!masterlist.includes(target)) {
-						if (popTheHood(ns, target)) { masterlist.push(target); }
-					}
-				}
-			}
-			ns.print("updating RAM servers...");
+		let checklist = masterLister(ns);
+		if (checklist.length > masterlist.length) {
+			for (const server of checklist) { if (!masterlist.includes(server)) { masterlist.push(server); } }
 			for (const target of masterlist) {
 				if (!ramlist.includes(target)) {
 					if (ns.getServerMaxRam(target) > 0) {
 						ramlist.push(target);
 						ns.scp("manhack.js", target);
-						ns.scp("mangrow.js", target);
-						ns.scp("manweaken.js", target);
 					}
 				}
-			}
-			ns.print("updating hack servers...");
-			for (const target of masterlist) {
 				if (!targetList.includes(target)) {
 					if (ns.getServerRequiredHackingLevel(target) <= ns.getHackingLevel()) {
 						if (ns.getServerMaxMoney(target) > 0) {
@@ -153,28 +112,17 @@ export async function main(ns: NS): Promise<void> {
 					}
 				}
 			}
-			ns.print("updating PID and timer arrays...");
 			if (pidList.length < targetList.length) {
 				pidList = pidList.concat(Array(targetList.length - pidList.length).fill(0));
 				timerlist = timerlist.concat(Array(targetList.length - timerlist.length).fill(0));
 			}
 			if (!formsexe) {
-				ns.print("checking for Formulas.exe...");
 				formsexe = ns.fileExists("Formulas.exe", "home");
 				if (formsexe) {
-					ns.print("Formulas.exe found! wiping subscripts and PID array...");
-					for (const target of masterlist) {
-						ns.scriptKill("manhack.js", target);
-						ns.scriptKill("mangrow.js", target);
-						ns.scriptKill("manweaken.js", target);
-					}
+					for (const target of masterlist) { ns.scriptKill("manhack.js", target); }
 					for (let i = 0; i < pidList.length; i++) { pidList[i] = 0; }
 				}
 			}
-			loopcount = 0;
-		} else {
-			loopcount++;
-			ns.print("loop count: " + loopcount);
 		}
 	}
 }
