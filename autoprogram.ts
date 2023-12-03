@@ -1,7 +1,8 @@
 import { NS } from "@ns";
+import { hasFocusPenalty } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.singularity.stopAction();
-	const willfocus = !ns.singularity.getOwnedAugmentations().includes("Neuroreceptor Management Implant");
+	const willfocus = hasFocusPenalty(ns);
 	const progs = ["AutoLink.exe", "BruteSSH.exe", "DeepscanV1.exe", "ServerProfiler.exe", "FTPCrack.exe",
 		"relaySMTP.exe", "DeepscanV2.exe"];
 	const dwprogs = ["HTTPWorm.exe", "SQLInject.exe"];

@@ -102,3 +102,12 @@ export function lowestCombatStat(ns: NS): [string, number] {
 export function getKarma(ns: NS): number {
 	return eval("ns.heart.break()");
 }
+
+/**
+ * Checks for the Neuroreceptor Management Implant, and returns true if lacking the aug, to avoid unfocused work penalties.
+ * @param ns BitBurner NS object
+ * @returns returns true if the unfocused work penalty applies, false otherwise
+ */
+export function hasFocusPenalty(ns: NS): boolean {
+	return !ns.singularity.getOwnedAugmentations().includes("Neuroreceptor Management Implant");
+}
