@@ -98,3 +98,7 @@ export function lowestCombatStat(ns: NS): [string, number] {
 	if (agility[1] < loweststat[1]) { loweststat = agility; }
 	return loweststat;
 }
+
+export function getKarma(ns: NS): number {
+	return eval("ns.heart.break()");
+}

@@ -9,6 +9,8 @@ export async function main(ns: NS): Promise<void> {
 		"Fulcrum Secret Technologies", "Four Sigma", "The Black Hand", "The Dark Army", "Clarke Incorporated", "OmniTek Incorporated", "NWO", "Chongqing",
 		"Blade Industries", "MegaCorp", "KuaiGong International", "Slum Snakes", "Speakers for the Dead", "The Syndicate", "The Covenant"];
 	const playeraugs = ns.singularity.getOwnedAugmentations(true);
+	const donatefav = ns.getFavorToDonate();
+	let workfactions = desiredfactions.filter(fac => ns.singularity.getFactionFavor(fac) < donatefav);
 	let factions = ns.getPlayer().factions;
 	for (const fac of desiredfactions) { if (!factions.includes(fac)) { factions.push(fac); } }
 	let auglist = [];
@@ -25,7 +27,7 @@ export async function main(ns: NS): Promise<void> {
 			}
 		}
 	}
-	let sortedlist = [];
+	let sortedlist = [] as string[];
 	while (auglist.length > 0) {
 		let highdex = 0;
 		let highrep = 0;
@@ -39,7 +41,19 @@ export async function main(ns: NS): Promise<void> {
 	}
 	if (ns.gang.inGang()) { sortedlist = sortedlist.filter(aug => !ns.singularity.getAugmentationsFromFaction(ns.gang.getGangInformation().faction).includes(aug)); }
 	for (const aug of sortedlist) { ns.tprint(aug + ": " + ns.singularity.getAugmentationFactions(aug).toString()); }
+	workfactions = workfactions.filter(fac => ns.singularity.getAugmentationsFromFaction(fac).some(aug => sortedlist.includes(aug)));
+	let workreps = [];
+	for (const faction of workfactions) {
+		let highestrep = 0;
+		let facaugs = ns.singularity.getAugmentationsFromFaction(faction);
+		for (const aug of facaugs) {
+			let augrep = ns.singularity.getAugmentationRepReq(aug);
+			if (augrep > highestrep && sortedlist.includes(aug)) { highestrep = augrep; }
+		}
+		let donaterep = ns.formulas.reputation.calculateFavorToRep(donatefav);
+		workreps.push(Math.min(highestrep, donaterep));
+	}
+	//ns.singularity.workForFaction(workfactions[0], "hacking", false);
 	//TODO:
-	//check against a list of factions ordered early -> late
 	//work for each in turn until all augs are acquired
 }
