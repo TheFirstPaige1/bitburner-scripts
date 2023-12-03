@@ -7,7 +7,7 @@ import { NS } from "@ns";
  * @param ns BitBurner NS object
  * @returns an array containing server name string pair arrays
  */
-export function netScan(ns: NS): Array<Array<string>> {
+export function netScan(ns: NS): string[][] {
 	let excludedservers = ns.getPurchasedServers();
 	for (let i = 0; i < ns.hacknet.numNodes(); i++) { excludedservers.push(ns.hacknet.getNodeStats(i).name); }
 	excludedservers.push("w0r1d_d43m0n");
@@ -68,7 +68,7 @@ export function remoteConnect(ns: NS, target: string) {
  * @param ns BitBurner NS object
  * @returns an array of all root-accessable server name strings
  */
-export function masterLister(ns: NS): Array<string> {
+export function masterLister(ns: NS): string[] {
 	let masterlist = ["home"];
 	for (const scantarg of masterlist) {
 		let workinglist = ns.scan(scantarg);
@@ -79,4 +79,22 @@ export function masterLister(ns: NS): Array<string> {
 		}
 	}
 	return masterlist;
+}
+
+/**
+ * Returns an array of the string and level of the lowest of the player's combat stats.
+ * RAM cost: 0.5 GB
+ * @param ns BitBurner NS object
+ * @returns an array of the string and number of the lowest combat stat
+ */
+export function lowestCombatStat(ns: NS): (string | number)[] {
+	const strength = ["strength", ns.getPlayer().skills.strength];
+	const defense = ["defense", ns.getPlayer().skills.defense];
+	const dexterity = ["dexterity", ns.getPlayer().skills.dexterity];
+	const agility = ["agility", ns.getPlayer().skills.agility];
+	let loweststat = strength;
+	if (defense[1] < loweststat[1]) { loweststat = defense; }
+	if (dexterity[1] < loweststat[1]) { loweststat = dexterity; }
+	if (agility[1] < loweststat[1]) { loweststat = agility; }
+	return loweststat;
 }

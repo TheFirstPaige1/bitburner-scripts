@@ -13,10 +13,10 @@ Current scripts and their functions:
 - connecter - currently just prints a network path to a server passed as an argument, might make it attempt connect() chains later on
 
 - nettrawler - iterates over the network and hacks and backdoors as many as possible
-- darkweb - buys the TOR browser and then each hacking program in turn
-- autoprogram - an cheaper and slower alternate to darkweb, codes the programs in turn, useful for int exp
+- autoprogram - codes the programs in turn except for the last two, which it buys TOR to buy them with
 - sourcefiler - creates a txt file with the current source files owned including the currently accessed node
 - listaugs - prints to the log all unowned and faction available augments filtered by a list of desireable stats, awaiting further work
+- ironpumper - automatically works out at powerhouse gym in sector-12 until all stats are at least a given number
 
 - stockwatcher - automated stock market buyer/seller, doesn't require or use the 4S market data
 - bailwse - kills stockwatcher and sells all stocks, for when you want to stop trading
@@ -25,7 +25,7 @@ Current scripts and their functions:
 - sharesbuyback - a script that'll automatically buy back as many shares as you can afford every minute until they're all purchased
 
 - totalhack - a single-instance hack manager that dynamically allocates RAM and periodically updates as new servers are hackable, always run on home, relies on manhack subscript
-- totalrestart - kills and restarts totalhack, or runs it if it doesn't exist yet, as well as runs setup scripts (netscanner and sourcefiler)
+- totalrestart - kills and restarts totalhack, or runs it if it doesn't exist yet
 
 - servershare - a simple ram sharing script, kills all scripts running on purchased servers, distributes manshare to them, and run it using half maximum RAM
 - manshare - awaited infinite loop of the share function, perfectly 4GB of RAM
