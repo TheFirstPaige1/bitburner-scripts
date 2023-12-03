@@ -87,11 +87,11 @@ export function masterLister(ns: NS): string[] {
  * @param ns BitBurner NS object
  * @returns an array of the string and number of the lowest combat stat
  */
-export function lowestCombatStat(ns: NS): (string | number)[] {
-	const strength = ["strength", ns.getPlayer().skills.strength];
-	const defense = ["defense", ns.getPlayer().skills.defense];
-	const dexterity = ["dexterity", ns.getPlayer().skills.dexterity];
-	const agility = ["agility", ns.getPlayer().skills.agility];
+export function lowestCombatStat(ns: NS): [string, number] {
+	const strength = ["strength", ns.getPlayer().skills.strength] as [string, number];
+	const defense = ["defense", ns.getPlayer().skills.defense] as [string, number];
+	const dexterity = ["dexterity", ns.getPlayer().skills.dexterity] as [string, number];
+	const agility = ["agility", ns.getPlayer().skills.agility] as [string, number];
 	let loweststat = strength;
 	if (defense[1] < loweststat[1]) { loweststat = defense; }
 	if (dexterity[1] < loweststat[1]) { loweststat = dexterity; }
