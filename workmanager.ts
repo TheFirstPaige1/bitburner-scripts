@@ -56,10 +56,10 @@ export async function main(ns: NS): Promise<void> {
 		let sortedaugs = [];
 		while (augstobuy.length > 0) {
 			let highdex = 0;
-			let highrep = 0;
+			let highcost = 0;
 			for (let i = 0; i < augstobuy.length; i++) {
-				if (ns.singularity.getAugmentationRepReq(augstobuy[i]) > highrep) {
-					highrep = ns.singularity.getAugmentationRepReq(augstobuy[i]);
+				if (ns.singularity.getAugmentationPrice(augstobuy[i]) > highcost) {
+					highcost = ns.singularity.getAugmentationPrice(augstobuy[i]);
 					highdex = i;
 				}
 			}
