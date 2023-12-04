@@ -1,6 +1,37 @@
 import { Multipliers, NS } from "@ns";
 
 /**
+ * A hardcoded list of most of the normal factions in the game, ordered in a rough descending list of work priority. 
+ */
+export const desiredfactions = ["Netburners", //0, hacknet upgrades, cheap and usually helpful
+	"Tian Di Hui", //1, focus penalty removal aug is considered high priority
+	"Aevum", //2, pcmatrix is a very good aug to have
+	"CyberSec", //3, quick, low level, useful hack augs, has neurotrainer 1
+	"NiteSec", //4, a natural followup to cybersec, similar kinds of augs, has two very useful unique augs
+	"Tetrads", //5, a little out of the way, but by far the easiest source of a nice all skills aug
+	"Bachman & Associates", //6, a very strong source of charisma and rep augs
+	"BitRunners", //7, can skip the black hand until later
+	"ECorp", //8, strong rep and hack augs
+	"Daedalus", //9, working towards The Red Pill is the penultimate goal of a bitnode
+	"Fulcrum Secret Technologies",
+	"Four Sigma",
+	"The Black Hand", //12, while ostensibly the third hack faction, only the unique aug is left between nitesec and bitrunners
+	"The Dark Army",
+	"Clarke Incorporated",
+	"OmniTek Incorporated",
+	"NWO",
+	"Chongqing",
+	"Blade Industries",
+	"MegaCorp",
+	"KuaiGong International",
+	"Slum Snakes",
+	"Speakers for the Dead",
+	"The Syndicate",
+	"The Covenant",
+	"Illuminati"];
+
+
+/**
  * Creates an array detailing the server network, in the form of string pairs. 
  * The first of a pair is the name of a server, the second is the name of the server that is one step closer to home.
  * RAM cost: 4.25 GB

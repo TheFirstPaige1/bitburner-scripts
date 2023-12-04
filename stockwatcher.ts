@@ -5,7 +5,7 @@ export async function main(ns: NS): Promise<void> {
 	while (!ns.stock.purchaseWseAccount()) { await ns.sleep(60000); }
 	while (!ns.stock.purchaseTixApi()) { await ns.sleep(60000); }
 	const pricedev = 2;
-	const moneybuffer = 1000000;
+	const moneybuffer = ns.stock.getConstants().StockMarketCommission * 10;
 	const stocknames = ns.stock.getSymbols();
 	let canshort = false;
 	try { canshort = (ns.stock.buyShort(stocknames[0], 0) == 0); } catch { canshort = false; }
@@ -24,7 +24,7 @@ export async function main(ns: NS): Promise<void> {
 	while (true) {
 		for (let i = 0; i < stocknames.length; i++) {
 			let stocksym = stocknames[i];
-			let spendingmoney = Math.max(((ns.getServerMoneyAvailable("home") - moneybuffer) * 0.25), 0);
+			let spendingmoney = Math.max(((ns.getServerMoneyAvailable("home") - (2 * moneybuffer)) * 0.25), 0);
 			let stockprice = ns.stock.getPrice(stocksym);
 			stockhistory[i].unshift(stockprice);
 			stockhistory[i].pop();
