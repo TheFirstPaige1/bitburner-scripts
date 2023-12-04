@@ -28,4 +28,5 @@ export async function main(ns: NS): Promise<void> {
 			while (!ns.fileExists(exprog, "home")) { await ns.sleep(10000); }
 		}
 	}
+	ns.run("factionfarmer.js");
 }

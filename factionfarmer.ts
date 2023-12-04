@@ -71,4 +71,5 @@ export async function main(ns: NS): Promise<void> {
 		while (!ns.singularity.checkFactionInvitations().includes(desiredfactions[5])) { await ns.sleep(500); }
 		ns.singularity.joinFaction(desiredfactions[5]);
 	}
+	ns.run("workmanager.js");
 }
