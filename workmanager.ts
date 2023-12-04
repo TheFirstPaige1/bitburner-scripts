@@ -49,7 +49,11 @@ export async function main(ns: NS): Promise<void> {
 	}
 	while (workfactions.length > 0) {
 		if (!ns.singularity.workForFaction(workfactions[0], "hacking", focus)) { ns.singularity.workForFaction(workfactions[0], "field", focus) }
-		while (ns.singularity.getFactionRep(workfactions[0]) < workreps[0]) { await ns.sleep(60000); }
+		while (ns.singularity.getFactionRep(workfactions[0]) < workreps[0]) {
+			ns.singularity.upgradeHomeRam();
+			ns.singularity.upgradeHomeCores();
+			await ns.sleep(60000);
+		}
 		ns.singularity.stopAction();
 		let augstobuy = ns.singularity.getAugmentationsFromFaction(workfactions[0]);
 		augstobuy = augstobuy.filter(aug => ns.singularity.getFactionRep(workfactions[0]) > ns.singularity.getAugmentationRepReq(aug));

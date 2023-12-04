@@ -35,10 +35,11 @@ export async function main(ns: NS): Promise<void> {
 	}
 	fac = desiredfactions[4];	//CyberSec
 	if (factionHasAugs(ns, fac, combat) && !ns.getPlayer().factions.includes(fac)) {
-		while (!popTheHood(ns, "CSEC")) { await moneyTimeKill(ns, focus); }
-		while (ns.getServerRequiredHackingLevel("CSEC") > ns.getHackingLevel()) { await moneyTimeKill(ns, focus); }
-		if (!ns.getServer("CSEC").backdoorInstalled) {
-			remoteConnect(ns, "CSEC");
+		let serv = "CSEC";
+		while (!popTheHood(ns, serv)) { await moneyTimeKill(ns, focus); }
+		while (ns.getServerRequiredHackingLevel(serv) > ns.getHackingLevel()) { await moneyTimeKill(ns, focus); }
+		if (!ns.getServer(serv).backdoorInstalled) {
+			remoteConnect(ns, serv);
 			await ns.singularity.installBackdoor();
 			ns.singularity.connect("home");
 		}
@@ -47,10 +48,11 @@ export async function main(ns: NS): Promise<void> {
 	}
 	fac = desiredfactions[5];	//NiteSec
 	if (factionHasAugs(ns, fac, combat) && !ns.getPlayer().factions.includes(fac)) {
-		while (!popTheHood(ns, "avmnite-02h")) { await moneyTimeKill(ns, focus); }
-		while (ns.getServerRequiredHackingLevel("avmnite-02h") > ns.getHackingLevel()) { await moneyTimeKill(ns, focus); }
-		if (!ns.getServer("avmnite-02h").backdoorInstalled) {
-			remoteConnect(ns, "avmnite-02h");
+		let serv = "avmnite-02h";
+		while (!popTheHood(ns, serv)) { await moneyTimeKill(ns, focus); }
+		while (ns.getServerRequiredHackingLevel(serv) > ns.getHackingLevel()) { await moneyTimeKill(ns, focus); }
+		if (!ns.getServer(serv).backdoorInstalled) {
+			remoteConnect(ns, serv);
 			await ns.singularity.installBackdoor();
 			ns.singularity.connect("home");
 		}
@@ -74,6 +76,20 @@ export async function main(ns: NS): Promise<void> {
 		}
 		ns.singularity.stopAction();
 		while (!ns.singularity.travelToCity("Chongqing")) { await moneyTimeKill(ns, focus); }
+		while (!ns.singularity.checkFactionInvitations().includes(fac)) { await ns.sleep(500); }
+		ns.singularity.joinFaction(fac);
+	}
+	//7, Bachman & Associates - handle companies in the work manager script
+	fac = desiredfactions[8]; //Bitrunners
+	if (factionHasAugs(ns, fac, combat) && !ns.getPlayer().factions.includes(fac)) {
+		let serv = "run4theh111z";
+		while (!popTheHood(ns, serv)) { await moneyTimeKill(ns, focus); }
+		while (ns.getServerRequiredHackingLevel(serv) > ns.getHackingLevel()) { await moneyTimeKill(ns, focus); }
+		if (!ns.getServer(serv).backdoorInstalled) {
+			remoteConnect(ns, serv);
+			await ns.singularity.installBackdoor();
+			ns.singularity.connect("home");
+		}
 		while (!ns.singularity.checkFactionInvitations().includes(fac)) { await ns.sleep(500); }
 		ns.singularity.joinFaction(fac);
 	}

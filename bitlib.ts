@@ -11,25 +11,28 @@ export const desiredfactions = ["Netburners", //0, hacknet upgrades, cheap and u
 	"NiteSec", //5, a natural followup to cybersec, similar kinds of augs, has two very useful unique augs
 	"Tetrads", //6, a little out of the way, but by far the easiest source of a nice all skills aug
 	"Bachman & Associates", //7, a very strong source of charisma and rep augs
-	"BitRunners", //8, can skip the black hand until later
+	"BitRunners", //8, can skip the black hand until later, powerful unique augs
 	"ECorp", //9, strong rep and hack augs
 	"Daedalus", //10, working towards The Red Pill is the penultimate goal of a bitnode
-	"Fulcrum Secret Technologies",
-	"Four Sigma",
-	"The Black Hand", //13, while ostensibly the third hack faction, only the unique aug is left between nitesec and bitrunners
+	"Fulcrum Secret Technologies", //11, 
+	//"Four Sigma", - no unique augs, no point bothering tbh
+	"The Black Hand", //12, while ostensibly the third hack faction, only the unique aug is left between nitesec and bitrunners
 	"The Dark Army",
 	"Clarke Incorporated",
 	"OmniTek Incorporated",
 	"NWO",
 	"Chongqing",
+	"New Tokyo",
+	"Ishima",
 	"Blade Industries",
-	"MegaCorp",
-	"KuaiGong International",
+	"Illuminati",
 	"Slum Snakes",
+	"Volhaven",
 	"Speakers for the Dead",
 	"The Syndicate",
-	"The Covenant",
-	"Illuminati"];
+	"MegaCorp",
+	"KuaiGong International",
+	"The Covenant"];
 
 
 /**
@@ -172,7 +175,7 @@ export function hasDesiredStats(ns: NS, augment: string): boolean {
 
 /**
  * Checks if a given faction still has unowned desireable augments to buy. 
- * RAM cost: 240/60/15 GB
+ * RAM cost: 243/63/18 GB
  * @param ns BitBurner NS object
  * @param faction string of a faction name to check for augments
  * @param combat false filters for augments with desired stats, true includes all augments
@@ -182,6 +185,9 @@ export function factionHasAugs(ns: NS, faction: string, combat: boolean): boolea
 	let factionaugs = ns.singularity.getAugmentationsFromFaction(faction);
 	factionaugs = factionaugs.filter(aug => !ns.singularity.getOwnedAugmentations(true).includes(aug));
 	if (!combat) { factionaugs = factionaugs.filter(aug => hasDesiredStats(ns, aug)); }
+	if (ns.gang.inGang()) {
+		factionaugs = factionaugs.filter(aug => ns.singularity.getAugmentationsFromFaction(ns.gang.getGangInformation().faction).includes(aug));
+	}
 	return (factionaugs.length > 0);
 }
 
