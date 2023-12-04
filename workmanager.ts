@@ -1,5 +1,5 @@
 import { NS } from "@ns";
-import { desiredfactions, hasDesiredStats, hasFocusPenalty } from "./bitlib";
+import { desiredfactions, hasDesiredStats, hasFocusPenalty, moneyTimeKill } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	const focus = hasFocusPenalty(ns);
 	ns.singularity.stopAction();
@@ -7,6 +7,7 @@ export async function main(ns: NS): Promise<void> {
 	const playeraugs = ns.singularity.getOwnedAugmentations(true);
 	const donatefav = ns.getFavorToDonate();
 	let workfactions = desiredfactions.filter(fac => ns.singularity.getFactionFavor(fac) < donatefav);
+	let donatefaction = desiredfactions.filter(fac => ns.singularity.getFactionFavor(fac) >= donatefav);
 	let auglist = [] as string[];
 	for (const faction of desiredfactions) {
 		const factaugs = ns.singularity.getAugmentationsFromFaction(faction);
@@ -53,7 +54,7 @@ export async function main(ns: NS): Promise<void> {
 		let augstobuy = ns.singularity.getAugmentationsFromFaction(workfactions[0]);
 		augstobuy = augstobuy.filter(aug => ns.singularity.getFactionRep(workfactions[0]) > ns.singularity.getAugmentationRepReq(aug));
 		if (!combat) { augstobuy = augstobuy.filter(aug => hasDesiredStats(ns, aug)); }
-		let sortedaugs = [];
+		let sortedaugs = [] as string[];
 		while (augstobuy.length > 0) {
 			let highdex = 0;
 			let highcost = 0;
@@ -65,11 +66,11 @@ export async function main(ns: NS): Promise<void> {
 			}
 			sortedaugs.push(...augstobuy.splice(highdex, 1));
 		}
-		for (const aug of sortedaugs) {
-			while (!ns.singularity.purchaseAugmentation(workfactions[0], aug)) {
-				if (ns.singularity.getCrimeChance("Homicide") > 0.5) { await ns.sleep(ns.singularity.commitCrime("Homicide", focus)); }
-				else { await ns.sleep(ns.singularity.commitCrime("Mug", focus)); }
-			}
+		for (let i = 0; 1 < sortedaugs.length; i++) {
+			let aug = sortedaugs[i];
+			let prereqs = ns.singularity.getAugmentationPrereq(aug).filter(aug => ns.singularity.getOwnedAugmentations(true).includes(aug));
+			if (!prereqs.some(aug => !sortedaugs.includes(aug))) { sortedaugs.push(...sortedaugs.splice(i--, 1)); }
+			if (prereqs.length == 0) { while (!ns.singularity.purchaseAugmentation(workfactions[0], aug)) { await moneyTimeKill(ns, focus); } }
 			ns.singularity.stopAction();
 		}
 		workfactions.shift();

@@ -5,17 +5,18 @@ import { Multipliers, NS } from "@ns";
  */
 export const desiredfactions = ["Netburners", //0, hacknet upgrades, cheap and usually helpful
 	"Tian Di Hui", //1, focus penalty removal aug is considered high priority
-	"Aevum", //2, pcmatrix is a very good aug to have
-	"CyberSec", //3, quick, low level, useful hack augs, has neurotrainer 1
-	"NiteSec", //4, a natural followup to cybersec, similar kinds of augs, has two very useful unique augs
-	"Tetrads", //5, a little out of the way, but by far the easiest source of a nice all skills aug
-	"Bachman & Associates", //6, a very strong source of charisma and rep augs
-	"BitRunners", //7, can skip the black hand until later
-	"ECorp", //8, strong rep and hack augs
-	"Daedalus", //9, working towards The Red Pill is the penultimate goal of a bitnode
+	"Sector-12", //2, cashroot kit is early and useful
+	"Aevum", //3, pcmatrix is a very good aug to have
+	"CyberSec", //4, quick, low level, useful hack augs, has neurotrainer 1
+	"NiteSec", //5, a natural followup to cybersec, similar kinds of augs, has two very useful unique augs
+	"Tetrads", //6, a little out of the way, but by far the easiest source of a nice all skills aug
+	"Bachman & Associates", //7, a very strong source of charisma and rep augs
+	"BitRunners", //8, can skip the black hand until later
+	"ECorp", //9, strong rep and hack augs
+	"Daedalus", //10, working towards The Red Pill is the penultimate goal of a bitnode
 	"Fulcrum Secret Technologies",
 	"Four Sigma",
-	"The Black Hand", //12, while ostensibly the third hack faction, only the unique aug is left between nitesec and bitrunners
+	"The Black Hand", //13, while ostensibly the third hack faction, only the unique aug is left between nitesec and bitrunners
 	"The Dark Army",
 	"Clarke Incorporated",
 	"OmniTek Incorporated",
@@ -182,4 +183,16 @@ export function factionHasAugs(ns: NS, faction: string, combat: boolean): boolea
 	factionaugs = factionaugs.filter(aug => !ns.singularity.getOwnedAugmentations(true).includes(aug));
 	if (!combat) { factionaugs = factionaugs.filter(aug => hasDesiredStats(ns, aug)); }
 	return (factionaugs.length > 0);
+}
+
+/**
+ * A function to run while waiting for money to afford something, commits homicide if the chance is at least 50%, mugs otherwise.
+ * RAM cost: 176/44/11 GB
+ * @param ns BitBurner NS object
+ * @param focus boolean for if the crime should be focused on
+ */
+export async function moneyTimeKill(ns: NS, focus: boolean): Promise<void> {
+	if (ns.singularity.getCrimeChance("Homicide") > 0.5) { await ns.sleep(ns.singularity.commitCrime("Homicide", focus)); }
+	else { await ns.sleep(ns.singularity.commitCrime("Mug", focus)); }
+	ns.singularity.stopAction();
 }

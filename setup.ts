@@ -1,5 +1,5 @@
 import { NS } from "@ns";
-import { hasFocusPenalty, masterLister } from "./bitlib";
+import { hasFocusPenalty, masterLister, moneyTimeKill } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
 	for (const serv of masterLister(ns)) { ns.scp(ns.ls(serv, ".lit"), "home", serv); }
@@ -7,7 +7,7 @@ export async function main(ns: NS): Promise<void> {
 	ns.scriptKill("totalhack.js", "home");
 	ns.run("totalhack.js");
 	ns.singularity.universityCourse("Rothman University", "Computer Science", focus);
-	await ns.sleep(300000);
+	await ns.sleep(Math.max(1, (300000 - (Date.now() - ns.getResetInfo().lastAugReset))));
 	const progs = ["BruteSSH.exe", "FTPCrack.exe"];
 	const dwprogs = ["relaySMTP.exe", "HTTPWorm.exe", "SQLInject.exe"];
 	for (const prog of progs) {
@@ -19,19 +19,9 @@ export async function main(ns: NS): Promise<void> {
 			while (!ns.fileExists(prog, "home")) { await ns.sleep(10000); }
 		}
 	}
-	while (!ns.singularity.purchaseTor()) {
-		if (ns.singularity.getCrimeChance("Homicide") > 0.5) { await ns.sleep(ns.singularity.commitCrime("Homicide", focus)); }
-		else { await ns.sleep(ns.singularity.commitCrime("Mug", focus)); }
-	}
+	while (!ns.singularity.purchaseTor()) { await moneyTimeKill(ns, focus); }
 	ns.singularity.stopAction();
-	for (const dwprog of dwprogs) {
-		if (!ns.fileExists(dwprog, "home")) {
-			while (!ns.singularity.purchaseProgram(dwprog)) {
-				if (ns.singularity.getCrimeChance("Homicide") > 0.5) { await ns.sleep(ns.singularity.commitCrime("Homicide", focus)); }
-				else { await ns.sleep(ns.singularity.commitCrime("Mug", focus)); }
-			}
-		}
-	}
+	for (const dwprog of dwprogs) { if (!ns.fileExists(dwprog, "home")) { while (!ns.singularity.purchaseProgram(dwprog)) { moneyTimeKill(ns, focus); } } }
 	ns.singularity.stopAction();
 	/* for now, find a new home for this
 	const exprogs = ["AutoLink.exe", "DeepscanV1.exe", "ServerProfiler.exe", "DeepscanV2.exe"];

@@ -26,5 +26,9 @@ export async function main(ns: NS): Promise<void> {
 		sortedlist.push(...auglist.splice(highdex, 1));
 	}
 	if (ns.gang.inGang()) { sortedlist = sortedlist.filter(aug => !ns.singularity.getAugmentationsFromFaction(ns.gang.getGangInformation().faction).includes(aug)); }
-	for (const aug of sortedlist) { ns.tprint(aug + ": " + ns.singularity.getAugmentationFactions(aug).toString()); }
+	for (const aug of sortedlist) {
+		ns.tprint(aug + ": "
+			+ ns.formatNumber(ns.singularity.getAugmentationRepReq(aug)) + ", "
+			+ ns.singularity.getAugmentationFactions(aug).toString());
+	}
 }
