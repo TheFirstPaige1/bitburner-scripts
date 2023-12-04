@@ -4,7 +4,7 @@ export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
 	const target = ns.args[0] as number;
 	const focus = hasFocusPenalty(ns);
-	ns.singularity.goToLocation("Sector-12");
+	ns.singularity.goToLocation("Sector12");
 	let loweststat = lowestCombatStat(ns);
 	while (loweststat[1] < target) {
 		ns.singularity.gymWorkout("Powerhouse Gym", loweststat[0], focus);

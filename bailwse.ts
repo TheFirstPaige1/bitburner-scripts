@@ -1,5 +1,4 @@
 import { NS } from "@ns";
-import { sourceCheck } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.scriptKill("stockwatcher.js", "home");
 	const stocknames = ns.stock.getSymbols();

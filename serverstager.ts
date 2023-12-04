@@ -1,7 +1,7 @@
 import { NS } from "@ns";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
-	ns.tail();
+	//ns.tail();
 	let passedarg = 0;
 	if (ns.args.length > 0) {
 		passedarg = ns.args[0] as number;

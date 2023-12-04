@@ -2,7 +2,7 @@ import { NS } from "@ns";
 import { masterLister } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
-	ns.tail();
+	//ns.tail();
 	let formsexe = ns.fileExists("Formulas.exe", "home");
 	let masterlist = masterLister(ns);
 	for (const target of masterlist) { ns.scriptKill("manhack.js", target); }

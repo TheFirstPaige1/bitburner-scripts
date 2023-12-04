@@ -99,6 +99,11 @@ export function lowestCombatStat(ns: NS): [string, number] {
 	return loweststat;
 }
 
+/**
+ * Evals an undocumented function call to grab a secret value, the player's current karma.
+ * @param ns BitBurner NS object
+ * @returns number of current karma, usually negative
+ */
 export function getKarma(ns: NS): number {
 	return eval("ns.heart.break()");
 }

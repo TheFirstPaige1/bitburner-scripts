@@ -1,7 +1,7 @@
 import { NS } from "@ns";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
-	ns.tail();
+	//ns.tail();
 	//let formsexe = ns.fileExists("Formulas.exe", "home");
 	let running = true;
 	while (running) {

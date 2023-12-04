@@ -2,7 +2,7 @@ import { NS } from "@ns";
 //import { sourceCheck } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
-	ns.tail();
+	//ns.tail();
 	const pricedev = 2;
 	const moneybuffer = 1000000;
 	const stocknames = ns.stock.getSymbols();
