@@ -1,14 +1,14 @@
 import { NS } from "@ns";
-//import { sourceCheck } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
 	//ns.tail();
+	while (!ns.stock.purchaseWseAccount()) { await ns.sleep(60000); }
+	while (!ns.stock.purchaseTixApi()) { await ns.sleep(60000); }
 	const pricedev = 2;
 	const moneybuffer = 1000000;
 	const stocknames = ns.stock.getSymbols();
 	let canshort = false;
-	try { canshort = (ns.stock.buyShort("ECP", 0) == 0); } catch { canshort = false; }
-	//const canshort = sourceCheck(ns, 8, 2);
+	try { canshort = (ns.stock.buyShort(stocknames[0], 0) == 0); } catch { canshort = false; }
 	let stockhistory = [];
 	for (let i = 0; i < stocknames.length; i++) { stockhistory.push([] as Array<number>); }
 	let updatecount = 0;
