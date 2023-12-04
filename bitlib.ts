@@ -1,4 +1,4 @@
-import { NS } from "@ns";
+import { Multipliers, NS } from "@ns";
 
 /**
  * Creates an array detailing the server network, in the form of string pairs. 
@@ -101,6 +101,7 @@ export function lowestCombatStat(ns: NS): [string, number] {
 
 /**
  * Evals an undocumented function call to grab a secret value, the player's current karma.
+ * RAM cost: 0 GB
  * @param ns BitBurner NS object
  * @returns number of current karma, usually negative
  */
@@ -110,9 +111,44 @@ export function getKarma(ns: NS): number {
 
 /**
  * Checks for the Neuroreceptor Management Implant, and returns true if lacking the aug, to avoid unfocused work penalties.
+ * RAM cost: 80/20/5 GB
  * @param ns BitBurner NS object
  * @returns returns true if the unfocused work penalty applies, false otherwise
  */
 export function hasFocusPenalty(ns: NS): boolean {
 	return !ns.singularity.getOwnedAugmentations().includes("Neuroreceptor Management Implant");
+}
+
+/**
+ * Checks if a given augment affects a desirable stat - hacking, repuation, charisma, or hacknet - 
+ * or is one of three special desired augments - CashRoot, NMI, or Red Pill. 
+ * RAM cost: 80/20/5 GB
+ * @param ns BitBurner NS object
+ * @param augment name of an augment as a string
+ * @returns true if the passed augment is desireable, false otherwise
+ */
+export function hasDesiredStats(ns: NS, augment: string): boolean {
+	const desiredstats: (keyof Multipliers)[] = ["charisma", "charisma_exp", "company_rep", "faction_rep", "hacking", "hacking_chance",
+		"hacking_exp", "hacking_grow", "hacking_money", "hacking_speed", "hacknet_node_money"];
+	const desiredaugs = ["CashRoot Starter Kit", "Neuroreceptor Management Implant", "The Red Pill"]; //"The Blade's Simulacrum", 
+	if (desiredaugs.includes(augment)) { return true; }
+	else {
+		let augstats = ns.singularity.getAugmentationStats(augment);
+		return desiredstats.some(stat => augstats[stat] > 1);
+	}
+}
+
+/**
+ * Checks if a given faction still has unowned desireable augments to buy. 
+ * RAM cost: 240/60/15 GB
+ * @param ns BitBurner NS object
+ * @param faction string of a faction name to check for augments
+ * @param combat false filters for augments with desired stats, true includes all augments
+ * @returns true if faction still has desired augments to get, false otherwise
+ */
+export function factionHasAugs(ns: NS, faction: string, combat: boolean): boolean {
+	let factionaugs = ns.singularity.getAugmentationsFromFaction(faction);
+	factionaugs = factionaugs.filter(aug => !ns.singularity.getOwnedAugmentations(true).includes(aug));
+	if (!combat) { factionaugs = factionaugs.filter(aug => hasDesiredStats(ns, aug)); }
+	return (factionaugs.length > 0);
 }
