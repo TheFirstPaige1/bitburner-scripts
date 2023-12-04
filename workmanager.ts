@@ -52,6 +52,7 @@ export async function main(ns: NS): Promise<void> {
 		ns.singularity.stopAction();
 		let augstobuy = ns.singularity.getAugmentationsFromFaction(workfactions[0]);
 		augstobuy = augstobuy.filter(aug => ns.singularity.getFactionRep(workfactions[0]) > ns.singularity.getAugmentationRepReq(aug));
+		if (!combat) { augstobuy = augstobuy.filter(aug => hasDesiredStats(ns, aug)); }
 		let sortedaugs = [];
 		while (augstobuy.length > 0) {
 			let highdex = 0;
