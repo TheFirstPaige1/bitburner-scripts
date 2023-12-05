@@ -26,6 +26,7 @@ export async function main(ns: NS): Promise<void> {
 				let mostfreeram = freeram;
 				for (let m = 1; m < ramlist.length; m++) {
 					freeram = ns.getServerMaxRam(ramlist[m]) - ns.getServerUsedRam(ramlist[m]);
+					if (ramlist[m].includes("hacknet-node")) { freeram = freeram / 2 }
 					if (freeram > mostfreeram) {
 						mostfreeram = freeram;
 						ramserver = ramlist[m];

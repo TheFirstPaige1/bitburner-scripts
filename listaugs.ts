@@ -1,17 +1,11 @@
 import { NS } from "@ns";
-import { desiredfactions, hasDesiredStats } from "./bitlib";
+import { desiredfactions } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
-	const combat = (ns.args[0] == true);
 	const playeraugs = ns.singularity.getOwnedAugmentations(true);
 	let auglist = [] as string[];
 	for (const faction of desiredfactions) {
 		const factaugs = ns.singularity.getAugmentationsFromFaction(faction);
-		for (const targaug of factaugs) {
-			if (!auglist.includes(targaug) && !playeraugs.includes(targaug)) {
-				if (combat) { auglist.push(targaug); }
-				else { if (hasDesiredStats(ns, targaug)) { auglist.push(targaug); } }
-			}
-		}
+		for (const targaug of factaugs) { if (!auglist.includes(targaug) && !playeraugs.includes(targaug)) { auglist.push(targaug); } }
 	}
 	let sortedlist = [] as string[];
 	while (auglist.length > 0) {

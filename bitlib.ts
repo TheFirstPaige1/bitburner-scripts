@@ -1,4 +1,4 @@
-import { Multipliers, NS } from "@ns";
+import { NS } from "@ns";
 
 /**
  * A hardcoded list of most of the normal factions in the game, ordered in a rough descending list of work priority. 
@@ -17,7 +17,7 @@ export const desiredfactions = ["Netburners", //0, hacknet upgrades, cheap and u
 	"Fulcrum Secret Technologies", //11, 
 	//"Four Sigma", - no unique augs, no point bothering tbh
 	"The Black Hand", //12, while ostensibly the third hack faction, only the unique aug is left between nitesec and bitrunners
-	"The Dark Army",
+	"The Dark Army", //it's about here I have up on the idea of prioritising factions, so below here is largely unsorted
 	"Clarke Incorporated",
 	"OmniTek Incorporated",
 	"NWO",
@@ -32,6 +32,7 @@ export const desiredfactions = ["Netburners", //0, hacknet upgrades, cheap and u
 	"The Syndicate",
 	"MegaCorp",
 	"KuaiGong International",
+	"Silhouette",
 	"The Covenant"];
 
 
@@ -155,36 +156,15 @@ export function hasFocusPenalty(ns: NS): boolean {
 }
 
 /**
- * Checks if a given augment affects a desirable stat - hacking, repuation, charisma, or hacknet - 
- * or is one of three special desired augments - CashRoot, NMI, or Red Pill. 
- * RAM cost: 80/20/5 GB
- * @param ns BitBurner NS object
- * @param augment name of an augment as a string
- * @returns true if the passed augment is desireable, false otherwise
- */
-export function hasDesiredStats(ns: NS, augment: string): boolean {
-	const desiredstats: (keyof Multipliers)[] = ["charisma", "charisma_exp", "company_rep", "faction_rep", "hacking", "hacking_chance",
-		"hacking_exp", "hacking_grow", "hacking_money", "hacking_speed", "hacknet_node_money"];
-	const desiredaugs = ["CashRoot Starter Kit", "Neuroreceptor Management Implant", "The Red Pill"]; //"The Blade's Simulacrum", 
-	if (desiredaugs.includes(augment)) { return true; }
-	else {
-		let augstats = ns.singularity.getAugmentationStats(augment);
-		return desiredstats.some(stat => augstats[stat] > 1);
-	}
-}
-
-/**
- * Checks if a given faction still has unowned desireable augments to buy. 
+ * Checks if a given faction still has unowned augments to buy. 
  * RAM cost: 243/63/18 GB
  * @param ns BitBurner NS object
  * @param faction string of a faction name to check for augments
- * @param combat false filters for augments with desired stats, true includes all augments
- * @returns true if faction still has desired augments to get, false otherwise
+ * @returns true if faction still has desired to get, false otherwise
  */
-export function factionHasAugs(ns: NS, faction: string, combat: boolean): boolean {
+export function factionHasAugs(ns: NS, faction: string): boolean {
 	let factionaugs = ns.singularity.getAugmentationsFromFaction(faction);
 	factionaugs = factionaugs.filter(aug => !ns.singularity.getOwnedAugmentations(true).includes(aug));
-	if (!combat) { factionaugs = factionaugs.filter(aug => hasDesiredStats(ns, aug)); }
 	if (ns.gang.inGang()) {
 		factionaugs = factionaugs.filter(aug => ns.singularity.getAugmentationsFromFaction(ns.gang.getGangInformation().faction).includes(aug));
 	}
@@ -202,3 +182,9 @@ export async function moneyTimeKill(ns: NS, focus: boolean): Promise<void> {
 	else { await ns.sleep(ns.singularity.commitCrime("Mug", focus)); }
 	ns.singularity.stopAction();
 }
+
+/*
+export async function setupCrimeFaction(ns: NS, stats: number, karma: number): Promise<void> {
+
+}
+*/
