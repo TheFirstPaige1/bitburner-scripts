@@ -22,6 +22,6 @@ export async function main(ns: NS): Promise<void> {
 			highestfac = faction;
 		}
 	}
-	while (ns.singularity.purchaseAugmentation(highestfac, "NeuroFlux Governor")) { await ns.sleep(1); }
+	while (ns.singularity.purchaseAugmentation(highestfac, "NeuroFlux Governor")) { await ns.sleep(10); }
 	ns.singularity.installAugmentations("setup.js");
 }

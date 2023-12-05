@@ -33,5 +33,7 @@ export async function main(ns: NS): Promise<void> {
 		}
 	}
 	*/
+	let pid = ns.run("nettrawler.js");
+	while (ns.isRunning(pid)) { await moneyTimeKill(ns, focus); }
 	ns.run("factionfarmer.js");
 }

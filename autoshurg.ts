@@ -1,10 +1,10 @@
-import { NS } from "@ns";
+import { CityName, NS } from "@ns";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
 	const corpname = "Shurg Industries";
 	const agriname = "Shurg Monocultural";
 	const tobaname = "Shurg Tamacco";
-	const citynames = ["Sector-12", "Aevum", "Chongqing", "New Tokyo", "Ishima", "Volhaven"];
+	const citynames = ["Sector-12", "Aevum", "Chongqing", "New Tokyo", "Ishima", "Volhaven"] as CityName[];
 	const fullapi = (ns.corporation.hasUnlock("Warehouse API") && ns.corporation.hasUnlock("Office API"));
 	const selffund = ns.getResetInfo().currentNode != 3;
 	let investcycle = ns.corporation.getInvestmentOffer().round;
@@ -18,13 +18,5 @@ export async function main(ns: NS): Promise<void> {
 			if (!ns.corporation.hasUnlock("Office API")) { ns.corporation.purchaseUnlock("Office API"); }
 		}
 	}
-	//let agcities = ns.corporation.getDivision(agriname).cities.map(city => city.toString());
-	try {
-		ns.corporation.expandCity(agriname, "Sector-12");
-		ns.corporation.expandCity(agriname, "Aevum");
-		ns.corporation.expandCity(agriname, "Chongqing");
-		ns.corporation.expandCity(agriname, "New Tokyo");
-		ns.corporation.expandCity(agriname, "Ishima");
-		ns.corporation.expandCity(agriname, "Volhaven");
-	} catch {}
+	citynames.map(city => { if (!ns.corporation.getDivision(agriname).cities.includes(city)) { ns.corporation.expandCity(agriname, city); } });
 }

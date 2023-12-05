@@ -1,4 +1,4 @@
-import { NS } from "@ns";
+import { CompanyName, NS } from "@ns";
 
 /**
  * A hardcoded list of most of the normal factions in the game, ordered in a rough descending list of work priority. 
@@ -35,6 +35,15 @@ export const desiredfactions = ["Netburners", //0, hacknet upgrades, cheap and u
 	"Silhouette",
 	"The Covenant"];
 
+export const companyFactions = ["Bachman & Associates",
+	"ECorp",
+	"Fulcrum Secret Technologies",
+	"Clarke Incorporated",
+	"OmniTek Incorporated",
+	"NWO",
+	"Blade Industries",
+	"MegaCorp",
+	"KuaiGong International"] as CompanyName[];
 
 /**
  * Creates an array detailing the server network, in the form of string pairs. 
@@ -183,8 +192,29 @@ export async function moneyTimeKill(ns: NS, focus: boolean): Promise<void> {
 	ns.singularity.stopAction();
 }
 
-/*
-export async function setupCrimeFaction(ns: NS, stats: number, karma: number): Promise<void> {
-
+export async function setupCrimeFaction(ns: NS, stats: number, karma: number, focus: boolean): Promise<void> {
+	let combatstats = lowestCombatStat(ns);
+	while (!ns.singularity.travelToCity("Sector-12")) { await moneyTimeKill(ns, focus); }
+	while (combatstats[1] < stats) {
+		ns.singularity.gymWorkout("Powerhouse Gym", combatstats[0], focus);
+		await ns.sleep(1000);
+		combatstats = lowestCombatStat(ns);
+	}
+	ns.singularity.stopAction();
+	let currentkarma = getKarma(ns);
+	while (currentkarma > karma) {
+		if (ns.singularity.getCrimeChance("Homicide") > 0.5) { await ns.sleep(ns.singularity.commitCrime("Homicide", focus)); }
+		else { await ns.sleep(ns.singularity.commitCrime("Mug", focus)); }
+	}
+	ns.singularity.stopAction();
 }
-*/
+
+export async function setupHackFaction(ns: NS, server: string, focus: boolean): Promise<void> {
+	while (!popTheHood(ns, server)) { await moneyTimeKill(ns, focus); }
+	while (ns.getServerRequiredHackingLevel(server) > ns.getHackingLevel()) { await moneyTimeKill(ns, focus); }
+	if (!ns.getServer(server).backdoorInstalled) {
+		remoteConnect(ns, server);
+		await ns.singularity.installBackdoor();
+		ns.singularity.connect("home");
+	}
+}
