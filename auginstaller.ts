@@ -1,5 +1,6 @@
 import { NS } from "@ns";
 export async function main(ns: NS): Promise<void> {
+	for (const fac of ns.singularity.checkFactionInvitations()) { ns.singularity.joinFaction(fac); }
 	ns.scriptKill("stockwatcher.js", "home");
 	if (ns.stock.hasWSEAccount() && ns.stock.hasTIXAPIAccess()) {
 		const stocknames = ns.stock.getSymbols();
@@ -13,15 +14,7 @@ export async function main(ns: NS): Promise<void> {
 	let factions = ns.getPlayer().factions;
 	factions = factions.filter(fac => !excludedfacs.includes(fac));
 	if (ns.gang.inGang()) { factions = factions.filter(fac => ns.gang.getGangInformation().faction != fac); }
-	let highestrep = 0;
-	let highestfac = "";
-	for (const faction of factions) {
-		let facrep = ns.singularity.getFactionRep(faction);
-		if (facrep > highestrep) {
-			highestrep = facrep;
-			highestfac = faction;
-		}
-	}
-	while (ns.singularity.purchaseAugmentation(highestfac, "NeuroFlux Governor")) { await ns.sleep(10); }
+	factions = factions.sort((a, b) => { return ns.singularity.getFactionRep(b) - ns.singularity.getFactionRep(a); })
+	while (ns.singularity.purchaseAugmentation(factions[0], "NeuroFlux Governor")) { await ns.sleep(10); }
 	ns.singularity.installAugmentations("setup.js");
 }

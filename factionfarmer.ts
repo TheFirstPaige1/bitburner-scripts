@@ -9,27 +9,25 @@ export async function main(ns: NS): Promise<void> {
 	if (!(factionHasAugs(ns, "Sector-12") || factionHasAugs(ns, "Aevum"))) { citygroup = 1; }
 	if (citygroup == 1 && !(factionHasAugs(ns, "Chongqing") || factionHasAugs(ns, "New Tokyo") || factionHasAugs(ns, "Ishima"))) { citygroup = 2; }
 	let companyjoin = false;
+	let joincount = 0;
 	let fac = desiredfactions[0];	//Netburners
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
-		if (ns.hacknet.numNodes() < 1) { while (ns.hacknet.purchaseNode() == -1) { await moneyTimeKill(ns, focus); } }
-		if (ns.hacknet.getNodeStats(0).level < 100) { while (!ns.hacknet.upgradeLevel(0, 99)) { await moneyTimeKill(ns, focus); } }
-		if (ns.hacknet.getNodeStats(0).ram < 8) { while (!ns.hacknet.upgradeRam(0, 3)) { await moneyTimeKill(ns, focus); } }
-		if (ns.hacknet.getNodeStats(0).cores < 4) { while (!ns.hacknet.upgradeCore(0, 3)) { await moneyTimeKill(ns, focus); } }
+		//there was hacknet stuff here, but setup has it now, so netburners will always invite
 		while (!ns.singularity.checkFactionInvitations().includes(fac)) { await ns.sleep(500); }
-		ns.singularity.joinFaction(fac);
+		if (ns.singularity.joinFaction(fac)) { joincount++; }
 	}
 	fac = desiredfactions[1];	//Tian Di Hui
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
 		while (!ns.singularity.travelToCity("Chongqing")) { await moneyTimeKill(ns, focus); }
 		while (!ns.singularity.checkFactionInvitations().includes(fac)) { await moneyTimeKill(ns, focus); }
-		ns.singularity.joinFaction(fac);
+		if (ns.singularity.joinFaction(fac)) { joincount++; }
 	}
 	fac = desiredfactions[2];	//Sector-12 (city faction)
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
 		if (citygroup == 0) {
 			while (!ns.singularity.travelToCity("Sector-12")) { await moneyTimeKill(ns, focus); }
 			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await moneyTimeKill(ns, focus); }
-			ns.singularity.joinFaction(fac);
+			if (ns.singularity.joinFaction(fac)) { joincount++; }
 		}
 	}
 	fac = desiredfactions[3];	//Aevum (city faction)
@@ -37,20 +35,20 @@ export async function main(ns: NS): Promise<void> {
 		if (citygroup == 0) {
 			while (!ns.singularity.travelToCity("Aevum")) { await moneyTimeKill(ns, focus); }
 			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await moneyTimeKill(ns, focus); }
-			ns.singularity.joinFaction(fac);
+			if (ns.singularity.joinFaction(fac)) { joincount++; }
 		}
 	}
 	fac = desiredfactions[4];	//CyberSec
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
 		await setupHackFaction(ns, "CSEC", focus);
 		while (!ns.singularity.checkFactionInvitations().includes(fac)) { await ns.sleep(500); }
-		ns.singularity.joinFaction(fac);
+		if (ns.singularity.joinFaction(fac)) { joincount++; }
 	}
 	fac = desiredfactions[5];	//NiteSec
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
 		await setupHackFaction(ns, "avmnite-02h", focus);
 		while (!ns.singularity.checkFactionInvitations().includes(fac)) { await ns.sleep(500); }
-		ns.singularity.joinFaction(fac);
+		if (ns.singularity.joinFaction(fac)) { joincount++; }
 	}
 	fac = desiredfactions[6];	//Tetrads
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
@@ -58,7 +56,7 @@ export async function main(ns: NS): Promise<void> {
 			await setupCrimeFaction(ns, 75, -18, focus);
 			while (!ns.singularity.travelToCity("Chongqing")) { await moneyTimeKill(ns, focus); }
 			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await ns.sleep(500); }
-			ns.singularity.joinFaction(fac);
+			if (ns.singularity.joinFaction(fac)) { joincount++; }
 		}
 	}
 	fac = desiredfactions[7];	//Bachman & Associates
@@ -73,7 +71,7 @@ export async function main(ns: NS): Promise<void> {
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
 		await setupHackFaction(ns, "run4theh111z", focus);
 		while (!ns.singularity.checkFactionInvitations().includes(fac)) { await ns.sleep(500); }
-		ns.singularity.joinFaction(fac);
+		if (ns.singularity.joinFaction(fac)) { joincount++; }
 	}
 	fac = desiredfactions[9];	//ECorp
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
@@ -97,7 +95,7 @@ export async function main(ns: NS): Promise<void> {
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
 		await setupHackFaction(ns, "I.I.I.I", focus);
 		while (!ns.singularity.checkFactionInvitations().includes(fac)) { await ns.sleep(500); }
-		ns.singularity.joinFaction(fac);
+		if (ns.singularity.joinFaction(fac)) { joincount++; }
 	}
 	fac = desiredfactions[13];	//The Dark Army
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
@@ -105,7 +103,7 @@ export async function main(ns: NS): Promise<void> {
 			await setupCrimeFaction(ns, 300, -45, focus);
 			while (!ns.singularity.travelToCity("Chongqing")) { await moneyTimeKill(ns, focus); }
 			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await ns.sleep(500); }
-			ns.singularity.joinFaction(fac);
+			if (ns.singularity.joinFaction(fac)) { joincount++; }
 		}
 	}
 	fac = desiredfactions[14];	//Clarke Incorporated
@@ -137,7 +135,7 @@ export async function main(ns: NS): Promise<void> {
 		if (citygroup == 1) {
 			while (!ns.singularity.travelToCity("Chongqing")) { await moneyTimeKill(ns, focus); }
 			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await moneyTimeKill(ns, focus); }
-			ns.singularity.joinFaction(fac);
+			if (ns.singularity.joinFaction(fac)) { joincount++; }
 		}
 	}
 	fac = desiredfactions[18]; //New Tokyo (city faction)
@@ -145,7 +143,7 @@ export async function main(ns: NS): Promise<void> {
 		if (citygroup == 1) {
 			while (!ns.singularity.travelToCity("New Tokyo")) { await moneyTimeKill(ns, focus); }
 			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await moneyTimeKill(ns, focus); }
-			ns.singularity.joinFaction(fac);
+			if (ns.singularity.joinFaction(fac)) { joincount++; }
 		}
 	}
 	fac = desiredfactions[19]; //Ishima (city faction)
@@ -153,7 +151,7 @@ export async function main(ns: NS): Promise<void> {
 		if (citygroup == 1) {
 			while (!ns.singularity.travelToCity("Ishima")) { await moneyTimeKill(ns, focus); }
 			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await moneyTimeKill(ns, focus); }
-			ns.singularity.joinFaction(fac);
+			if (ns.singularity.joinFaction(fac)) { joincount++; }
 		}
 	}
 	fac = desiredfactions[20];	//Blade Industries
@@ -169,14 +167,14 @@ export async function main(ns: NS): Promise<void> {
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
 		await setupCrimeFaction(ns, 30, -9, focus);
 		while (!ns.singularity.checkFactionInvitations().includes(fac)) { await ns.sleep(500); }
-		ns.singularity.joinFaction(fac);
+		if (ns.singularity.joinFaction(fac)) { joincount++; }
 	}
 	fac = desiredfactions[23]; //Volhaven  (city faction)
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
 		if (citygroup == 2) {
 			while (!ns.singularity.travelToCity("Volhaven")) { await moneyTimeKill(ns, focus); }
 			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await moneyTimeKill(ns, focus); }
-			ns.singularity.joinFaction(fac);
+			if (ns.singularity.joinFaction(fac)) { joincount++; }
 		}
 	}
 	fac = desiredfactions[24];	//Speakers for the Dead
@@ -184,7 +182,7 @@ export async function main(ns: NS): Promise<void> {
 		if (lowestCombatStat(ns)[1] > 250) {
 			await setupCrimeFaction(ns, 300, -45, focus);
 			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await ns.sleep(500); }
-			ns.singularity.joinFaction(fac);
+			if (ns.singularity.joinFaction(fac)) { joincount++; }
 		}
 	}
 	fac = desiredfactions[25];	//The Syndicate
@@ -193,7 +191,7 @@ export async function main(ns: NS): Promise<void> {
 			await setupCrimeFaction(ns, 200, -90, focus);
 			while (!ns.singularity.travelToCity("Aevum")) { await moneyTimeKill(ns, focus); }
 			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await ns.sleep(500); }
-			ns.singularity.joinFaction(fac);
+			if (ns.singularity.joinFaction(fac)) { joincount++; }
 		}
 	}
 	ns.run("workmanager.js");

@@ -1,77 +1,62 @@
-import { CompanyName, JobName, NS } from "@ns";
+import { NS } from "@ns";
 import { companyFactions, desiredfactions, hasFocusPenalty, moneyTimeKill } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	const focus = hasFocusPenalty(ns);
+	const augqueue = 7;
+	const playerjob = companyFactions.find(fac => ns.getPlayer().jobs[fac] != undefined);
 	ns.singularity.stopAction();
+	for (const fac of ns.singularity.checkFactionInvitations()) { ns.singularity.joinFaction(fac); }
 	const playeraugs = ns.singularity.getOwnedAugmentations(true);
-	const itjob = "IT" as JobName;
-	let playerjobs = ns.getPlayer().jobs
-	let playerjob = "" as CompanyName;
-	for (let i = 0; i < companyFactions.length; i++) { if (playerjobs[companyFactions[i]] == itjob) { playerjob = companyFactions[i]; } }
-	if (playerjob == "Fulcrum Technologies" as CompanyName) { playerjob = "Fulcrum Secret Technologies" as CompanyName }
 	let auglist = [] as string[];
 	for (const faction of desiredfactions) {
 		const factaugs = ns.singularity.getAugmentationsFromFaction(faction);
 		for (const targaug of factaugs) { if (!auglist.includes(targaug) && !playeraugs.includes(targaug)) { auglist.push(targaug); } }
 	}
-	let sortedlist = [] as string[];
-	while (auglist.length > 0) {
-		let highdex = 0;
-		let highrep = 0;
-		for (let i = 0; i < auglist.length; i++) {
-			if (ns.singularity.getAugmentationRepReq(auglist[i]) > highrep) {
-				highrep = ns.singularity.getAugmentationRepReq(auglist[i]);
-				highdex = i;
-			}
-		}
-		sortedlist.unshift(...auglist.splice(highdex, 1));
-	}
-	if (ns.gang.inGang()) { sortedlist = sortedlist.filter(aug => !ns.singularity.getAugmentationsFromFaction(ns.gang.getGangInformation().faction).includes(aug)); }
-	let queued = ns.singularity.getOwnedAugmentations(true).length - ns.singularity.getOwnedAugmentations(false).length;
-	while ((sortedlist.length > 0) && (queued < 7)) {
-		for (const fac of ns.singularity.checkFactionInvitations()) { ns.singularity.joinFaction(fac); }
-		let incrementor = 0;
-		let targaug = sortedlist[incrementor];
-		let targrep = ns.singularity.getAugmentationRepReq(targaug);
-		let augfacs = ns.singularity.getAugmentationFactions(targaug).filter(fac => (ns.getPlayer().factions.includes(fac)) || (fac as CompanyName == playerjob));
-		let facfav = 0;
-		let targfac = "";
-		do {
-			targaug = sortedlist[incrementor];
-			targrep = ns.singularity.getAugmentationRepReq(targaug);
-			augfacs = ns.singularity.getAugmentationFactions(targaug).filter(fac => (ns.getPlayer().factions.includes(fac)) || (fac as CompanyName == playerjob));
-			facfav = 0;
-			targfac = "";
-			for (let i = 0; i < augfacs.length; i++) {
-				if (ns.singularity.getFactionFavor(augfacs[i]) > facfav) {
-					facfav = ns.singularity.getFactionFavor(augfacs[i]);
-					targfac = augfacs[i];
+	let sortedlist = auglist.sort((a, b) => { return ns.singularity.getAugmentationRepReq(b) - ns.singularity.getAugmentationRepReq(a); })
+	let worklist = sortedlist.filter(aug => ns.singularity.getAugmentationPrereq(aug).every(aug => playeraugs.includes(aug)))
+	worklist = worklist.filter(aug => ns.singularity.getAugmentationFactions(aug).some(fac => ns.getPlayer().factions.includes(fac))).slice(-1 * augqueue);
+	worklist = worklist.sort((a, b) => { return ns.singularity.getAugmentationPrice(b) - ns.singularity.getAugmentationPrice(a); })
+	if (worklist.length < 5) {
+		if (playerjob != undefined) {
+			ns.singularity.workForCompany(playerjob, focus);
+			if (playerjob == "Fulcrum Technologies") {
+				while (!ns.singularity.checkFactionInvitations().includes("Fulcrum Secret Technologies")) {
+					ns.singularity.applyToCompany(playerjob, "IT");
+					await ns.sleep(6000);
 				}
+				ns.singularity.joinFaction("Fulcrum Secret Technologies");
+			} else {
+				while (!ns.singularity.checkFactionInvitations().includes(playerjob as string)) {
+					ns.singularity.applyToCompany(playerjob, "IT");
+					await ns.sleep(6000);
+				}
+				ns.singularity.joinFaction(playerjob as string);
 			}
-			if (targfac.length == 0) { incrementor++; }
-		} while (!(targfac.length > 0))
-		if (targfac as CompanyName == playerjob) {
-			if (playerjob == "Fulcrum Secret Technologies" as CompanyName) { ns.singularity.workForCompany("Fulcrum Technologies" as CompanyName, focus); }
-			else { ns.singularity.workForCompany(playerjob, focus); }
-			while (!ns.singularity.checkFactionInvitations().includes(targfac)) {
-				ns.singularity.upgradeHomeRam();
-				ns.singularity.upgradeHomeCores();
-				await ns.sleep(3000);
+		}
+	}
+	for (const targaug of worklist) {
+		if (!ns.singularity.getAugmentationFactions(targaug).some(fac => ns.singularity.getFactionRep(fac) >= ns.singularity.getAugmentationRepReq(targaug))) {
+			if (!ns.gang.inGang() || (ns.gang.inGang() && !ns.singularity.getAugmentationFactions(targaug).includes(ns.gang.getGangInformation().faction))) {
+				let workfac = ns.singularity.getAugmentationFactions(targaug).filter(fac => ns.getPlayer().factions.includes(fac)).sort((a, b) => {
+					return ns.singularity.getFactionFavor(b) - ns.singularity.getFactionFavor(a);
+				});
+				if (ns.singularity.getFactionFavor(workfac[0]) >= ns.getFavorToDonate()) {
+					while (ns.singularity.getFactionRep(workfac[0]) < ns.singularity.getAugmentationRepReq(targaug)) {
+						if (!ns.singularity.donateToFaction(workfac[0], 500000000)) {
+							await moneyTimeKill(ns, focus, playerjob);
+						}
+					}
+				} else {
+					if (!ns.singularity.workForFaction(workfac[0], "hacking", focus)) { ns.singularity.workForFaction(workfac[0], "field", focus) }
+					while (ns.singularity.getFactionRep(workfac[0]) < ns.singularity.getAugmentationRepReq(targaug)) { await ns.sleep(6000); }
+				}
+				ns.singularity.stopAction();
 			}
-			ns.singularity.joinFaction(targfac);
-			ns.singularity.stopAction();
 		}
-		if (facfav >= ns.getFavorToDonate()) {
-			while (ns.singularity.getFactionRep(targfac) < targrep) { if (!ns.singularity.donateToFaction(targfac, 1000000000)) { await moneyTimeKill(ns, focus); } }
-		} else {
-			if (!ns.singularity.workForFaction(targfac, "hacking", focus)) { ns.singularity.workForFaction(targfac, "field", focus) }
-			while (ns.singularity.getFactionRep(targfac) < targrep) { await ns.sleep(6000); }
-		}
-		ns.singularity.stopAction();
-		while (!ns.singularity.purchaseAugmentation(targfac, targaug)) { await moneyTimeKill(ns, focus); }
-		queued++;
-		ns.singularity.stopAction();
-		sortedlist.splice(incrementor, 1);
+	}
+	for (const targaug of worklist) {
+		let targfac = ns.singularity.getAugmentationFactions(targaug).sort((a, b) => { return ns.singularity.getFactionRep(b) - ns.singularity.getFactionRep(a); })[0];
+		while (!ns.singularity.purchaseAugmentation(targfac, targaug)) { await moneyTimeKill(ns, focus, playerjob); }
 	}
 	ns.run("auginstaller.js");
 }

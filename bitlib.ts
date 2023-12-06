@@ -37,7 +37,7 @@ export const desiredfactions = ["Netburners", //0, hacknet upgrades, cheap and u
 
 export const companyFactions = ["Bachman & Associates",
 	"ECorp",
-	"Fulcrum Secret Technologies",
+	"Fulcrum Technologies",
 	"Clarke Incorporated",
 	"OmniTek Incorporated",
 	"NWO",
@@ -182,12 +182,18 @@ export function factionHasAugs(ns: NS, faction: string): boolean {
 
 /**
  * A function to run while waiting for money to afford something, commits homicide if the chance is at least 50%, mugs otherwise.
- * RAM cost: 176/44/11 GB
+ * If passed a company that had a valid job, will assign work there instead.
+ * RAM cost: 224/56/14 GB
  * @param ns BitBurner NS object
  * @param focus boolean for if the crime should be focused on
+ * @param job optional argument to pass a job as CompanyName
  */
-export async function moneyTimeKill(ns: NS, focus: boolean): Promise<void> {
-	if (ns.singularity.getCrimeChance("Homicide") > 0.5) { await ns.sleep(ns.singularity.commitCrime("Homicide", focus)); }
+export async function moneyTimeKill(ns: NS, focus: boolean, job?: CompanyName): Promise<void> {
+	if (job != undefined) {
+		ns.singularity.workForCompany(job, focus);
+		await ns.sleep(4000);
+	}
+	else if (ns.singularity.getCrimeChance("Homicide") > 0.5) { await ns.sleep(ns.singularity.commitCrime("Homicide", focus)); }
 	else { await ns.sleep(ns.singularity.commitCrime("Mug", focus)); }
 	ns.singularity.stopAction();
 }
