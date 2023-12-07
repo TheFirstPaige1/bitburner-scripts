@@ -16,5 +16,12 @@ export async function main(ns: NS): Promise<void> {
 	if (ns.gang.inGang()) { factions = factions.filter(fac => ns.gang.getGangInformation().faction != fac); }
 	factions = factions.sort((a, b) => { return ns.singularity.getFactionRep(b) - ns.singularity.getFactionRep(a); })
 	while (ns.singularity.purchaseAugmentation(factions[0], "NeuroFlux Governor")) { await ns.sleep(10); }
-	ns.singularity.installAugmentations("setup.js");
+	if (ns.getResetInfo().currentNode == 2 && ns.gang.inGang()) { ns.singularity.purchaseAugmentation(ns.gang.getGangInformation().faction, "The Red Pill"); }
+	else { ns.singularity.purchaseAugmentation("Daedalus", "The Red Pill"); }
+	//if (ns.singularity.exportGameBonus()) { ns.singularity.exportGame(); }
+	if (!(ns.singularity.getOwnedAugmentations().includes("The Red Pill") && (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel("w0r1d_d43m0n")))) {
+		ns.singularity.installAugmentations("setup.js");
+	} else {
+		ns.tprint("GO BACKDOOR w0r1d_d43m0n");
+	}
 }

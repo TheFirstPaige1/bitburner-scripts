@@ -11,12 +11,10 @@ export async function main(ns: NS): Promise<void> {
 	if (!ns.corporation.hasCorporation()) { while (!ns.corporation.createCorporation(corpname, selffund)) { await ns.sleep(60000); } }
 	if (!ns.corporation.getCorporation().divisions.includes(agriname)) { ns.corporation.expandIndustry("Agriculture", agriname); }
 	if (!ns.corporation.hasUnlock("Smart Supply")) { ns.corporation.purchaseUnlock("Smart Supply"); }
-	if (investcycle > 1) {
-		if (!ns.corporation.hasUnlock("Export")) { ns.corporation.purchaseUnlock("Export"); }
-		if (!fullapi) {
-			if (!ns.corporation.hasUnlock("Warehouse API")) { ns.corporation.purchaseUnlock("Warehouse API"); }
-			if (!ns.corporation.hasUnlock("Office API")) { ns.corporation.purchaseUnlock("Office API"); }
-		}
+	if (!ns.corporation.hasUnlock("Export")) { ns.corporation.purchaseUnlock("Export"); }
+	if (!fullapi) {
+		if (!ns.corporation.hasUnlock("Warehouse API")) { ns.corporation.purchaseUnlock("Warehouse API"); }
+		if (!ns.corporation.hasUnlock("Office API")) { ns.corporation.purchaseUnlock("Office API"); }
 	}
 	citynames.map(city => { if (!ns.corporation.getDivision(agriname).cities.includes(city)) { ns.corporation.expandCity(agriname, city); } });
 }
