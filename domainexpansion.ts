@@ -1,9 +1,11 @@
 import { NS } from "@ns";
+import { getHacknetIndex, hasFocusPenalty } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
-	ns.disableLog('ALL');
-	let ramlimit = Math.trunc(ns.getServerMaxRam("home") / 2);
+	ns.disableLog('sleep');
+	ns.disableLog('getServerMaxRam');
+	if (hasFocusPenalty(ns)	) { ns.tail(); }
+	let ramlimit = ns.getServerMaxRam("home");
 	let pservlimit = Math.min(ramlimit, ns.getPurchasedServerMaxRam());
-	let corelimit = ns.getServer("home").cpuCores;
 	let serverlimit = ns.getPurchasedServerLimit();
 	let hacknetlimit = ns.hacknet.maxNumNodes();
 	if (hacknetlimit == Infinity) { hacknetlimit = serverlimit; }
@@ -12,28 +14,28 @@ export async function main(ns: NS): Promise<void> {
 			ramlimit = Math.trunc(ns.getServerMaxRam("home") / 2);
 			pservlimit = Math.min(ramlimit, ns.getPurchasedServerMaxRam());
 		}
-		if (ns.singularity.upgradeHomeCores()) { corelimit = ns.getServer("home").cpuCores; }
+		ns.singularity.upgradeHomeCores();
 		let pservcost = ns.getPurchasedServerCost(2);
 		if (ns.getPurchasedServers().length >= serverlimit) { pservcost = Infinity; }
 		let hacknetcost = ns.hacknet.getPurchaseNodeCost();
 		if (ns.hacknet.numNodes() >= hacknetlimit) { hacknetcost = Infinity; }
 		let nextpserv = ns.getPurchasedServers().sort((a, b) => { return ns.getServerMaxRam(a) - ns.getServerMaxRam(b); })[0];
-		let nextpservcost = ns.getPurchasedServerUpgradeCost(nextpserv, ns.getServerMaxRam(nextpserv) * 2);
-		if (ns.getServerMaxRam(nextpserv) >= pservlimit) { nextpservcost = Infinity; }
+		let nextpservcost = Infinity;
+		if (nextpserv != undefined) { nextpservcost = ns.getPurchasedServerUpgradeCost(nextpserv, ns.getServerMaxRam(nextpserv) * 2); }
+		if (nextpserv != undefined && ns.getServerMaxRam(nextpserv) >= pservlimit) { nextpservcost = Infinity; }
 		let hacknets = [];
 		for (let i = 0; i < ns.hacknet.numNodes(); i++) { hacknets.push(ns.hacknet.getNodeStats(i)); }
-		let nexthacklevel = hacknets.indexOf(hacknets.sort((a, b) => { return a.level - b.level; })[0]);
+		let nexthacklevel = getHacknetIndex(ns, hacknets.sort((a, b) => { return a.level - b.level; })[0].name);
 		let nexthacklevelcost = ns.hacknet.getLevelUpgradeCost(nexthacklevel);
-		let nexthackram = hacknets.indexOf(hacknets.sort((a, b) => { return a.ram - b.ram; })[0]);
+		let nexthackram = getHacknetIndex(ns, hacknets.sort((a, b) => { return a.ram - b.ram; })[0].name);
 		let nexthackramcost = ns.hacknet.getRamUpgradeCost(nexthackram);
 		if (ns.hacknet.getNodeStats(nexthackram).ram >= ramlimit) { nexthackramcost = Infinity; }
-		let nexthackcore = hacknets.indexOf(hacknets.sort((a, b) => { return a.cores - b.cores; })[0]);
+		let nexthackcore = getHacknetIndex(ns, hacknets.sort((a, b) => { return a.cores - b.cores; })[0].name);
 		let nexthackcorecost = ns.hacknet.getCoreUpgradeCost(nexthackcore);
-		if (ns.hacknet.getNodeStats(nexthackcore).cores >= corelimit) { nexthackcorecost = Infinity; }
-		let nexthackcache = hacknets.indexOf(hacknets.sort((a, b) => {
+		let nexthackcache = getHacknetIndex(ns, hacknets.sort((a, b) => {
 			if (a.cache != undefined && b.cache != undefined) { return a.cache - b.cache; }
 			else { return 0; }
-		})[0]);
+		})[0].name);
 		let nexthackcachecost = ns.hacknet.getCacheUpgradeCost(nexthackcache);
 		let nextcost = Infinity;
 		let nextpurchase = -1;
@@ -64,6 +66,54 @@ export async function main(ns: NS): Promise<void> {
 		if (nextcost > nexthackcachecost) {
 			nextcost = nexthackcachecost;
 			nextpurchase = 6;
+		}
+		ns.print("next cost is: " + ns.formatNumber(nextcost));
+		if (nextcost != Infinity) {
+			while (ns.getServerMoneyAvailable("home") < nextcost) {
+				if (ns.singularity.upgradeHomeRam()) {
+					ramlimit = Math.trunc(ns.getServerMaxRam("home") / 2);
+					pservlimit = Math.min(ramlimit, ns.getPurchasedServerMaxRam());
+				}
+				ns.singularity.upgradeHomeCores();
+				if (ns.hacknet.numHashes() > ns.hacknet.hashCost("Sell for Money")) { ns.hacknet.spendHashes("Sell for Money"); }
+				await ns.sleep(6000);
+			}
+			switch (nextpurchase) {
+				case 0:
+					let servname = "pserv-" + ns.getPurchasedServers().length;
+					ns.purchaseServer(servname, 2);
+					ns.scp("manshare.js", servname, "home");
+					break;
+				case 1:
+					ns.hacknet.purchaseNode();
+					break;
+				case 2:
+					let ram = ns.getServerMaxRam(nextpserv) * 2;
+					ns.upgradePurchasedServer(nextpserv, ram);
+					if (ram > 7) {
+						ns.killall(nextpserv);
+						ns.exec("manshare.js", nextpserv, Math.trunc(ram / 8));
+					}
+					break;
+				case 3:
+					ns.hacknet.upgradeLevel(nexthacklevel);
+					break;
+				case 4:
+					ns.hacknet.upgradeRam(nexthackram);
+					break;
+				case 5:
+					ns.hacknet.upgradeCore(nexthackcore);
+					break;
+				case 6:
+					ns.hacknet.upgradeCache(nexthackcache);
+			}
+		} else {
+			if (ns.singularity.upgradeHomeRam()) {
+				ramlimit = Math.trunc(ns.getServerMaxRam("home") / 2);
+				pservlimit = Math.min(ramlimit, ns.getPurchasedServerMaxRam());
+			}
+			ns.singularity.upgradeHomeCores();
+			await ns.sleep(60000);
 		}
 	}
 }

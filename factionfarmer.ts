@@ -2,9 +2,13 @@ import { NS } from "@ns";
 import { companyFactions, desiredfactions, factionHasAugs, hasFocusPenalty, lowestCombatStat, moneyTimeKill, setupCrimeFaction, setupHackFaction } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	const focus = hasFocusPenalty(ns);
+	ns.disableLog('sleep');
+	ns.disableLog('singularity.commitCrime');
+	ns.disableLog('singularity.gymWorkout');
+	if (focus) { ns.tail(); }
 	ns.singularity.stopAction();
-	const cityfactions = ["Sector-12", "Aevum", "Chongqing", "New Tokyo", "Ishima", "Volhaven"];
-	for (const faction of ns.singularity.checkFactionInvitations()) { if (!cityfactions.includes(faction)) { ns.singularity.joinFaction(faction); } }
+	//const cityfactions = ["Sector-12", "Aevum", "Chongqing", "New Tokyo", "Ishima", "Volhaven"];
+	//for (const faction of ns.singularity.checkFactionInvitations()) { if (!cityfactions.includes(faction)) { ns.singularity.joinFaction(faction); } }
 	let playerjob = companyFactions.find(fac => ns.getPlayer().jobs[fac] != undefined);
 	while (playerjob != undefined) {
 		ns.singularity.quitJob(playerjob);
@@ -14,12 +18,19 @@ export async function main(ns: NS): Promise<void> {
 	if (!(factionHasAugs(ns, "Sector-12") || factionHasAugs(ns, "Aevum"))) { citygroup = 1; }
 	if (citygroup == 1 && !(factionHasAugs(ns, "Chongqing") || factionHasAugs(ns, "New Tokyo") || factionHasAugs(ns, "Ishima"))) { citygroup = 2; }
 	let companyjoin = false;
-	let hackfocus = false;
+	let hackfocus = 0;
+	if (!factionHasAugs(ns, desiredfactions[4])) { hackfocus = 1; }
+	if (!factionHasAugs(ns, desiredfactions[5])) { hackfocus = 2; }
+	if (!factionHasAugs(ns, desiredfactions[8])) { hackfocus = 3; }
 	let joincount = 0;
 	let fac = desiredfactions[0];	//Netburners
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
-		//there was hacknet stuff here, but setup has it now, so netburners will always invite
-		while (!ns.singularity.checkFactionInvitations().includes(fac)) { await moneyTimeKill(ns, focus); }
+		while (!ns.singularity.checkFactionInvitations().includes(fac)) {
+			if (ns.hacknet.numNodes() < 1) { while (ns.hacknet.purchaseNode() == -1) { await moneyTimeKill(ns, focus); } }
+			if (ns.hacknet.getNodeStats(0).level < 100) { while (!ns.hacknet.upgradeLevel(0, 1)) { await moneyTimeKill(ns, focus); } }
+			if (ns.hacknet.getNodeStats(0).ram < 8) { while (!ns.hacknet.upgradeRam(0, 1)) { await moneyTimeKill(ns, focus); } }
+			if (ns.hacknet.getNodeStats(0).cores < 4) { while (!ns.hacknet.upgradeCore(0, 1)) { await moneyTimeKill(ns, focus); } }
+		}
 		if (ns.singularity.joinFaction(fac)) { joincount++; }
 	}
 	fac = desiredfactions[1];	//Tian Di Hui
@@ -46,29 +57,23 @@ export async function main(ns: NS): Promise<void> {
 	}
 	fac = desiredfactions[4];	//CyberSec
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
-		if (!hackfocus) {
+		if (hackfocus == 0) {
 			await setupHackFaction(ns, "CSEC", focus);
 			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await moneyTimeKill(ns, focus); }
-			if (ns.singularity.joinFaction(fac)) {
-				joincount++;
-				hackfocus = true
-			}
+			if (ns.singularity.joinFaction(fac)) { joincount++; }
 		}
 	}
 	fac = desiredfactions[5];	//NiteSec
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
-		if (!hackfocus) {
+		if (hackfocus == 1) {
 			await setupHackFaction(ns, "avmnite-02h", focus);
 			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await moneyTimeKill(ns, focus); }
-			if (ns.singularity.joinFaction(fac)) {
-				joincount++;
-				hackfocus = true
-			}
+			if (ns.singularity.joinFaction(fac)) { joincount++; }
 		}
 	}
 	fac = desiredfactions[6];	//Tetrads
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
-		if (lowestCombatStat(ns)[1] > 30 || joincount < 4) {
+		if (lowestCombatStat(ns)[1] > 50 || joincount < 4) {
 			await setupCrimeFaction(ns, 75, -18, focus);
 			while (!ns.singularity.travelToCity("Chongqing")) { await moneyTimeKill(ns, focus); }
 			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await moneyTimeKill(ns, focus); }
@@ -84,13 +89,10 @@ export async function main(ns: NS): Promise<void> {
 	}
 	fac = desiredfactions[8]; //Bitrunners
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
-		if (!hackfocus) {
+		if (hackfocus == 2) {
 			await setupHackFaction(ns, "run4theh111z", focus);
 			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await moneyTimeKill(ns, focus); }
-			if (ns.singularity.joinFaction(fac)) {
-				joincount++;
-				hackfocus = true
-			}
+			if (ns.singularity.joinFaction(fac)) { joincount++; }
 		}
 	}
 	fac = desiredfactions[9];	//ECorp
@@ -120,13 +122,10 @@ export async function main(ns: NS): Promise<void> {
 	}
 	fac = desiredfactions[12];	//The Black Hand
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
-		if (!hackfocus) {
+		if (hackfocus == 3) {
 			await setupHackFaction(ns, "I.I.I.I", focus);
 			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await moneyTimeKill(ns, focus); }
-			if (ns.singularity.joinFaction(fac)) {
-				joincount++;
-				hackfocus = true
-			}
+			if (ns.singularity.joinFaction(fac)) { joincount++; }
 		}
 	}
 	fac = desiredfactions[13];	//The Dark Army
@@ -224,7 +223,7 @@ export async function main(ns: NS): Promise<void> {
 	}
 	fac = desiredfactions[25];	//The Syndicate
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
-		if (lowestCombatStat(ns)[1] > 150 || joincount < 4) {
+		if (lowestCombatStat(ns)[1] > 170 || joincount < 4) {
 			await setupCrimeFaction(ns, 200, -90, focus);
 			while (!ns.singularity.travelToCity("Aevum")) { await moneyTimeKill(ns, focus); }
 			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await moneyTimeKill(ns, focus); }

@@ -1,7 +1,9 @@
 import { NS } from "@ns";
 import { companyFactions, desiredfactions, hasFocusPenalty, moneyTimeKill } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
+	ns.disableLog('sleep');
 	const focus = hasFocusPenalty(ns);
+	if (focus) { ns.tail(); }
 	const augqueue = 7;
 	const playerjob = companyFactions.find(fac => ns.getPlayer().jobs[fac] != undefined);
 	ns.singularity.stopAction();
@@ -34,6 +36,7 @@ export async function main(ns: NS): Promise<void> {
 			}
 		}
 	}
+	ns.scriptKill("domainexpansion.js", "home");
 	for (const targaug of worklist) {
 		if (!ns.singularity.getAugmentationFactions(targaug).some(fac => ns.singularity.getFactionRep(fac) >= ns.singularity.getAugmentationRepReq(targaug))) {
 			if (!ns.gang.inGang() || (ns.gang.inGang() && !ns.singularity.getAugmentationFactions(targaug).includes(ns.gang.getGangInformation().faction))) {

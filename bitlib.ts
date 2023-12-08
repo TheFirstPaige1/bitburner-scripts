@@ -183,7 +183,7 @@ export function factionHasAugs(ns: NS, faction: string): boolean {
 /**
  * A function to run while waiting for money to afford something, commits homicide if the chance is at least 50%, mugs otherwise.
  * If passed a company that had a valid job, will assign work there instead.
- * RAM cost: 224/56/14 GB
+ * RAM cost: 64/16/4 GB
  * @param ns BitBurner NS object
  * @param focus boolean for if the crime should be focused on
  * @param job optional argument to pass a job as CompanyName
@@ -198,6 +198,14 @@ export async function moneyTimeKill(ns: NS, focus: boolean, job?: CompanyName): 
 	ns.singularity.stopAction();
 }
 
+/**
+ * Ensures the requirements for a crime faction can be met by reaching certain goals.
+ * RAM cost: 96.5/24.5/6.5 GB
+ * @param ns BitBurner NS object
+ * @param stats numerical combat stat requirement to reach
+ * @param karma negative numerical karma to reach
+ * @param focus boolean for if the tasks should be focused on
+ */
 export async function setupCrimeFaction(ns: NS, stats: number, karma: number, focus: boolean): Promise<void> {
 	let combatstats = lowestCombatStat(ns);
 	while (!ns.singularity.travelToCity("Sector-12")) { await moneyTimeKill(ns, focus); }
@@ -215,12 +223,32 @@ export async function setupCrimeFaction(ns: NS, stats: number, karma: number, fo
 	ns.singularity.stopAction();
 }
 
+/**
+ * Ensures the requirements for a hacker faction can be met by backdooring a specific server when possible.
+ * RAM cost: 132.75/38.75/14.75 GB
+ * @param ns BitBurner NS object
+ * @param server string of server to backdoor
+ * @param focus boolean of if the task should be focused on
+ */
 export async function setupHackFaction(ns: NS, server: string, focus: boolean): Promise<void> {
-	while (!popTheHood(ns, server)) { await moneyTimeKill(ns, focus); }
-	while (ns.getServerRequiredHackingLevel(server) > ns.getHackingLevel()) { await moneyTimeKill(ns, focus); }
 	if (!ns.getServer(server).backdoorInstalled) {
+		while (!popTheHood(ns, server)) { await moneyTimeKill(ns, focus); }
+		while (ns.getServerRequiredHackingLevel(server) > ns.getHackingLevel()) { await moneyTimeKill(ns, focus); }
 		remoteConnect(ns, server);
 		await ns.singularity.installBackdoor();
 		ns.singularity.connect("home");
 	}
+}
+
+/**
+ * Finds the index of a hacknet object whose name is passed as a string. Useful, as many hacknet functions only accept indexes.
+ * RAM cost: 4 GB
+ * @param ns BitBurner NS object
+ * @param name string of the name of a hacknet node/server
+ * @returns the index of the hacknet node/server
+ */
+export function getHacknetIndex(ns: NS, name: string): number {
+	let hacknets = [];
+	for (let i = 0; i < ns.hacknet.numNodes(); i++) { hacknets.push(ns.hacknet.getNodeStats(i).name); }
+	return hacknets.indexOf(name);
 }
