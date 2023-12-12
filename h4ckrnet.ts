@@ -1,8 +1,9 @@
 import { NS } from "@ns";
 export async function main(ns: NS): Promise<void> {
-	const payofftime = 10 * 60; //the seconds in ten minutes
+	const payofftime = 2 * 60; //the seconds in two minutes
 	const hnserv = ns.hacknet.hashCost("Sell for Money") < Infinity;
-	ns.disableLog('ALL');
+	ns.disableLog('sleep');
+	ns.disableLog('getServerMoneyAvailable');
 	//ns.tail();
 	//let formsexe = ns.fileExists("Formulas.exe", "home");
 	let running = true;
@@ -43,7 +44,10 @@ export async function main(ns: NS): Promise<void> {
 		ns.print("Next cost is $" + ns.formatNumber(nextdex[2]));
 		if (nextdex[2] == Infinity) { running = false; }
 		else {
-			while (ns.getServerMoneyAvailable("home") < nextdex[2]) { await ns.sleep(1000); }
+			while (ns.getServerMoneyAvailable("home") < nextdex[2]) {
+				while (ns.hacknet.spendHashes("Sell for Money")) { await ns.sleep(1); }
+				await ns.sleep(1000);
+			}
 			switch (nextdex[1]) {
 				case -1:
 					ns.hacknet.purchaseNode();

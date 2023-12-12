@@ -7,9 +7,8 @@ export async function main(ns: NS): Promise<void> {
 	ns.disableLog('sleep');
 	for (const serv of masterLister(ns)) { ns.scp(ns.ls(serv, ".lit"), "home", serv); }
 	for (const fac of ns.singularity.checkFactionInvitations()) { ns.singularity.joinFaction(fac); }
-	ns.run("babysitter.js");
-	ns.run("h4ckrnet.js");
 	ns.run("totalhack.js");
+	ns.run("h4ckrnet.js");
 	ns.singularity.universityCourse("Rothman University", "Computer Science", focus);
 	await ns.sleep(Math.max(1, (300000 - (Date.now() - ns.getResetInfo().lastAugReset))));
 	const progs = ["BruteSSH.exe", "FTPCrack.exe"];
@@ -23,6 +22,8 @@ export async function main(ns: NS): Promise<void> {
 			while (!ns.fileExists(prog, "home")) { await ns.sleep(10000); }
 		}
 	}
+	ns.scriptKill("h4ckrnet.js", "home");
+	ns.run("babysitter.js");
 	while (!ns.singularity.purchaseTor()) { await moneyTimeKill(ns, focus); }
 	ns.singularity.stopAction();
 	for (const dwprog of dwprogs) { if (!ns.fileExists(dwprog, "home")) { while (!ns.singularity.purchaseProgram(dwprog)) { await moneyTimeKill(ns, focus); } } }
@@ -31,6 +32,5 @@ export async function main(ns: NS): Promise<void> {
 	while (ns.isRunning(pid)) { await moneyTimeKill(ns, focus); }
 	ns.run("factionfarmer.js");
 	ns.run("serverstager.js", 1, Math.trunc(ns.getServerMaxRam("home") / 2));
-	//ns.run("domainexpansion.js");
 	ns.run("stockwatcher.js");
 }
