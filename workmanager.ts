@@ -14,10 +14,10 @@ export async function main(ns: NS): Promise<void> {
 		const factaugs = ns.singularity.getAugmentationsFromFaction(faction);
 		for (const targaug of factaugs) { if (!auglist.includes(targaug) && !playeraugs.includes(targaug)) { auglist.push(targaug); } }
 	}
-	let sortedlist = auglist.sort((a, b) => { return ns.singularity.getAugmentationRepReq(b) - ns.singularity.getAugmentationRepReq(a); })
-	let worklist = sortedlist.filter(aug => ns.singularity.getAugmentationPrereq(aug).every(aug => playeraugs.includes(aug)))
+	auglist.sort((a, b) => { return ns.singularity.getAugmentationRepReq(b) - ns.singularity.getAugmentationRepReq(a); })
+	let worklist = auglist.filter(aug => ns.singularity.getAugmentationPrereq(aug).every(aug => playeraugs.includes(aug)))
 	worklist = worklist.filter(aug => ns.singularity.getAugmentationFactions(aug).some(fac => ns.getPlayer().factions.includes(fac))).slice(-1 * augqueue);
-	worklist = worklist.sort((a, b) => { return ns.singularity.getAugmentationPrice(b) - ns.singularity.getAugmentationPrice(a); })
+	worklist.sort((a, b) => { return ns.singularity.getAugmentationPrice(b) - ns.singularity.getAugmentationPrice(a); })
 	if (worklist.length < 5) {
 		if (playerjob != undefined) {
 			ns.singularity.workForCompany(playerjob, focus);
@@ -37,6 +37,8 @@ export async function main(ns: NS): Promise<void> {
 		}
 	}
 	ns.scriptKill("domainexpansion.js", "home");
+	ns.scriptKill("serverstager.js", "home");
+	ns.scriptKill("h4ckrnet.js", "home");
 	for (const targaug of worklist) {
 		if (!ns.singularity.getAugmentationFactions(targaug).some(fac => ns.singularity.getFactionRep(fac) >= ns.singularity.getAugmentationRepReq(targaug))) {
 			if (!ns.gang.inGang() || (ns.gang.inGang() && !ns.singularity.getAugmentationFactions(targaug).includes(ns.gang.getGangInformation().faction))) {
