@@ -45,6 +45,16 @@ export const companyFactions = ["Bachman & Associates",
 	"MegaCorp",
 	"KuaiGong International"] as CompanyName[];
 
+export function quietTheBabblingThrong(ns: NS): void {
+	ns.disableLog('disableLog');
+	ns.disableLog('sleep');
+	ns.disableLog('getServerMoneyAvailable');
+	ns.disableLog('getHackingLevel');
+	ns.disableLog('singularity.commitCrime');
+	ns.disableLog('singularity.gymWorkout');
+	ns.disableLog('singularity.applyToCompany');
+}
+
 /**
  * Creates an array detailing the server network, in the form of string pairs. 
  * The first of a pair is the name of a server, the second is the name of the server that is one step closer to home.
@@ -198,6 +208,31 @@ export async function moneyTimeKill(ns: NS, focus: boolean, job?: CompanyName): 
 	ns.singularity.stopAction();
 }
 
+export async function trainCombat(ns: NS, target: number, focus: boolean): Promise<void> {
+	let combatstats = lowestCombatStat(ns);
+	while (!ns.singularity.travelToCity("Sector-12")) { await moneyTimeKill(ns, focus); }
+	while (combatstats[1] < target) {
+		ns.singularity.gymWorkout("Powerhouse Gym", combatstats[0], focus);
+		await ns.sleep(1000);
+		combatstats = lowestCombatStat(ns);
+	}
+	ns.singularity.stopAction();
+}
+
+export async function trainHacking(ns: NS, target: number, focus: boolean): Promise<void> {
+	while (!ns.singularity.travelToCity("Volhaven")) { await moneyTimeKill(ns, focus); }
+	ns.singularity.universityCourse("ZB Institute of Technology", "Algorithms", focus);
+	while (ns.getHackingLevel() < target) { await ns.sleep(1000); }
+	ns.singularity.stopAction();
+}
+
+export async function trainCharisma(ns: NS, target: number, focus: boolean): Promise<void> {
+	while (!ns.singularity.travelToCity("Volhaven")) { await moneyTimeKill(ns, focus); }
+	ns.singularity.universityCourse("ZB Institute of Technology", "Leadership", focus);
+	while (ns.getPlayer().skills.charisma < target) { await ns.sleep(1000); }
+	ns.singularity.stopAction();
+}
+
 /**
  * Ensures the requirements for a crime faction can be met by reaching certain goals.
  * RAM cost: 96.5/24.5/6.5 GB
@@ -207,14 +242,7 @@ export async function moneyTimeKill(ns: NS, focus: boolean, job?: CompanyName): 
  * @param focus boolean for if the tasks should be focused on
  */
 export async function setupCrimeFaction(ns: NS, stats: number, karma: number, focus: boolean): Promise<void> {
-	let combatstats = lowestCombatStat(ns);
-	while (!ns.singularity.travelToCity("Sector-12")) { await moneyTimeKill(ns, focus); }
-	while (combatstats[1] < stats) {
-		ns.singularity.gymWorkout("Powerhouse Gym", combatstats[0], focus);
-		await ns.sleep(1000);
-		combatstats = lowestCombatStat(ns);
-	}
-	ns.singularity.stopAction();
+	await trainCombat(ns, stats, focus);
 	let currentkarma = getKarma(ns);
 	while (currentkarma > karma) {
 		if (ns.singularity.getCrimeChance("Homicide") > 0.5) { await ns.sleep(ns.singularity.commitCrime("Homicide", focus)); }
@@ -232,8 +260,8 @@ export async function setupCrimeFaction(ns: NS, stats: number, karma: number, fo
  */
 export async function setupHackFaction(ns: NS, server: string, focus: boolean): Promise<void> {
 	if (!ns.getServer(server).backdoorInstalled) {
-		while (!popTheHood(ns, server)) { await moneyTimeKill(ns, focus); }
-		while (ns.getServerRequiredHackingLevel(server) > ns.getHackingLevel()) { await moneyTimeKill(ns, focus); }
+		while (!popTheHood(ns, server)) { await trainHacking(ns, ns.getServerRequiredHackingLevel(server), focus); }
+		while (ns.getServerRequiredHackingLevel(server) > ns.getHackingLevel()) { await trainHacking(ns, ns.getServerRequiredHackingLevel(server), focus); }
 		remoteConnect(ns, server);
 		await ns.singularity.installBackdoor();
 		ns.singularity.connect("home");

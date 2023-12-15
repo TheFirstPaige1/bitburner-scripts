@@ -65,8 +65,8 @@ export async function main(ns: NS): Promise<void> {
 						} else { ns.print("growing " + target + " with " + threadcount + " threads on " + ramserver); }
 						pidList[i] = ns.exec("manhack.js", ramserver, threadcount, 1, target);
 					} else {
-						let hackgoal = ns.getServerMaxMoney(target) - moneyThresh;
-						let threadcount = Math.ceil(ns.hackAnalyzeThreads(target, hackgoal));
+						let hackgoal = ns.getServerMoneyAvailable(target) * 0.9;
+						let threadcount = Math.trunc(ns.hackAnalyzeThreads(target, hackgoal));
 						threadcount = Math.min(threadcount, maxthreads);
 						if (formsexe) {
 							timerlist[i] = ns.formulas.hacking.hackTime(ns.getServer(target), ns.getPlayer());

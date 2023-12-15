@@ -15,7 +15,7 @@ export async function main(ns: NS): Promise<void> {
 	factions = factions.filter(fac => !excludedfacs.includes(fac));
 	if (ns.gang.inGang()) { factions = factions.filter(fac => ns.gang.getGangInformation().faction != fac); }
 	factions = factions.sort((a, b) => { return ns.singularity.getFactionRep(b) - ns.singularity.getFactionRep(a); })
-	while (ns.hacknet.spendHashes("Sell for Money")) { await ns.sleep(10); }
+	while (ns.hacknet.spendHashes("Sell for Money")) { await ns.sleep(1); }
 	while (ns.singularity.upgradeHomeRam()) { await ns.sleep(10); }
 	while (ns.singularity.upgradeHomeCores()) { await ns.sleep(10); }
 	while (ns.singularity.purchaseAugmentation(factions[0], "NeuroFlux Governor")) { await ns.sleep(10); }

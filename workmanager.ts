@@ -1,7 +1,7 @@
 import { NS } from "@ns";
-import { companyFactions, desiredfactions, hasFocusPenalty, moneyTimeKill } from "./bitlib";
+import { companyFactions, desiredfactions, hasFocusPenalty, moneyTimeKill, quietTheBabblingThrong } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
-	ns.disableLog('sleep');
+	quietTheBabblingThrong(ns);
 	const focus = hasFocusPenalty(ns);
 	if (focus) { ns.tail(); }
 	const augqueue = 7;

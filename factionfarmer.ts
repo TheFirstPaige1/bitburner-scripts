@@ -1,10 +1,8 @@
 import { NS } from "@ns";
-import { companyFactions, desiredfactions, factionHasAugs, hasFocusPenalty, lowestCombatStat, moneyTimeKill, setupCrimeFaction, setupHackFaction } from "./bitlib";
+import { companyFactions, desiredfactions, factionHasAugs, hasFocusPenalty, lowestCombatStat, moneyTimeKill, quietTheBabblingThrong, setupCrimeFaction, setupHackFaction } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	const focus = hasFocusPenalty(ns);
-	ns.disableLog('sleep');
-	ns.disableLog('singularity.commitCrime');
-	ns.disableLog('singularity.gymWorkout');
+	quietTheBabblingThrong(ns);
 	if (focus) { ns.tail(); }
 	ns.singularity.stopAction();
 	//const cityfactions = ["Sector-12", "Aevum", "Chongqing", "New Tokyo", "Ishima", "Volhaven"];
@@ -82,10 +80,7 @@ export async function main(ns: NS): Promise<void> {
 	}
 	fac = desiredfactions[7];	//Bachman & Associates
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
-		if (!companyjoin) {
-			while (!ns.singularity.applyToCompany("Bachman & Associates", "IT")) { await moneyTimeKill(ns, focus); }
-			companyjoin = true;
-		}
+		if (!companyjoin && ns.singularity.applyToCompany("Bachman & Associates", "IT")) { companyjoin = true; }
 	}
 	fac = desiredfactions[8]; //Bitrunners
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
@@ -97,10 +92,7 @@ export async function main(ns: NS): Promise<void> {
 	}
 	fac = desiredfactions[9];	//ECorp
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
-		if (!companyjoin) {
-			while (!ns.singularity.applyToCompany("ECorp", "IT")) { await moneyTimeKill(ns, focus); }
-			companyjoin = true;
-		}
+		if (!companyjoin && ns.singularity.applyToCompany("ECorp", "IT")) { companyjoin = true; }
 	}
 	fac = desiredfactions[10];	//Daedalus
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
@@ -116,8 +108,7 @@ export async function main(ns: NS): Promise<void> {
 		if ((ns.getHackingLevel() > 1200) && !companyjoin) {
 			await setupHackFaction(ns, "fulcrumassets", focus);
 			ns.singularity.quitJob("Fulcrum Technologies");
-			while (!ns.singularity.applyToCompany("Fulcrum Technologies", "IT")) { await moneyTimeKill(ns, focus); }
-			companyjoin = true;
+			if (ns.singularity.applyToCompany("Fulcrum Technologies", "IT")) { companyjoin = true; }
 		}
 	}
 	fac = desiredfactions[12];	//The Black Hand
@@ -139,24 +130,15 @@ export async function main(ns: NS): Promise<void> {
 	}
 	fac = desiredfactions[14];	//Clarke Incorporated
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
-		if (!companyjoin) {
-			while (!ns.singularity.applyToCompany("Clarke Incorporated", "IT")) { await moneyTimeKill(ns, focus); }
-			companyjoin = true;
-		}
+		if (!companyjoin && ns.singularity.applyToCompany("Clarke Incorporated", "IT")) { companyjoin = true; }
 	}
 	fac = desiredfactions[15];	//OmniTek Incorporated
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
-		if (!companyjoin) {
-			while (!ns.singularity.applyToCompany("OmniTek Incorporated", "IT")) { await moneyTimeKill(ns, focus); }
-			companyjoin = true;
-		}
+		if (!companyjoin && ns.singularity.applyToCompany("OmniTek Incorporated", "IT")) { companyjoin = true; }
 	}
 	fac = desiredfactions[16];	//NWO
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
-		if (!companyjoin) {
-			while (!ns.singularity.applyToCompany("NWO", "IT")) { await moneyTimeKill(ns, focus); }
-			companyjoin = true;
-		}
+		if (!companyjoin && ns.singularity.applyToCompany("NWO", "IT")) { companyjoin = true; }
 	}
 	fac = desiredfactions[17]; //Chongqing (city faction)
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
@@ -184,10 +166,7 @@ export async function main(ns: NS): Promise<void> {
 	}
 	fac = desiredfactions[20];	//Blade Industries
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
-		if (!companyjoin) {
-			while (!ns.singularity.applyToCompany("Blade Industries", "IT")) { await moneyTimeKill(ns, focus); }
-			companyjoin = true;
-		}
+		if (!companyjoin && ns.singularity.applyToCompany("Blade Industries", "IT")) { companyjoin = true; }
 	}
 	fac = desiredfactions[21];	//Illuminati
 	if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
