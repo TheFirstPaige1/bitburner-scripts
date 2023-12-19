@@ -1,26 +1,27 @@
 import { NS } from "@ns";
-import * as BitLib from "./bitlib";
+import { quietTheBabblingThrong, hasFocusPenalty } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
-	const targetcost = 25000000;
-	BitLib.quietTheBabblingThrong(ns);
-	if (BitLib.hasFocusPenalty(ns)) { ns.tail(); }
-	let running = true;
-	while (running) {
+	const h4ck = ns.hacknet;
+	quietTheBabblingThrong(ns);
+	if (hasFocusPenalty(ns)) { ns.tail(); }
+	while (true) {
+		let targetcost = Math.trunc(ns.getServerMoneyAvailable("home") * 0.25);
+		ns.print("spending allotment is " + ns.formatNumber(targetcost));
 		let costarray = [];
 		let newcost = Infinity;
-		if (ns.hacknet.numNodes() < ns.hacknet.maxNumNodes()) {
-			newcost = ns.hacknet.getPurchaseNodeCost();
-			if (newcost > targetcost && ns.hacknet.numNodes() > 0) { newcost = Infinity; }
+		if (h4ck.numNodes() < h4ck.maxNumNodes()) {
+			newcost = h4ck.getPurchaseNodeCost();
+			if (newcost > targetcost && h4ck.numNodes() > 0) { newcost = Infinity; }
 		}
-		for (let i = 0; i < ns.hacknet.numNodes(); i++) {
+		for (let i = 0; i < h4ck.numNodes(); i++) {
 			let upgarray = [0, 0, 0, 0];
-			upgarray[0] = ns.hacknet.getLevelUpgradeCost(i);
+			upgarray[0] = h4ck.getLevelUpgradeCost(i);
 			if (upgarray[0] > targetcost) { upgarray[0] = Infinity; }
-			upgarray[1] = ns.hacknet.getRamUpgradeCost(i);
+			upgarray[1] = h4ck.getRamUpgradeCost(i);
 			if (upgarray[1] > targetcost) { upgarray[1] = Infinity; }
-			upgarray[2] = ns.hacknet.getCoreUpgradeCost(i);
+			upgarray[2] = h4ck.getCoreUpgradeCost(i);
 			if (upgarray[2] > targetcost) { upgarray[2] = Infinity; }
-			upgarray[3] = ns.hacknet.getCacheUpgradeCost(i);
+			upgarray[3] = h4ck.getCacheUpgradeCost(i);
 			if (upgarray[3] > targetcost) { upgarray[3] = Infinity; }
 			costarray.push(upgarray);
 		}
@@ -32,32 +33,40 @@ export async function main(ns: NS): Promise<void> {
 			}
 		}
 		ns.print("Next cost is $" + ns.formatNumber(nextdex[2]));
-		if (nextdex[2] == Infinity) { running = false; }
-		else {
+		if (nextdex[2] == Infinity) {
+			if (h4ck.numHashes() > Math.trunc(h4ck.hashCapacity() * 0.75)) {
+				while (h4ck.numHashes() > Math.trunc(h4ck.hashCapacity() * 0.5)) {
+					h4ck.spendHashes("Sell for Money");
+				}
+			} else { await ns.sleep(10000); }
+		} else {
 			while (ns.getServerMoneyAvailable("home") < nextdex[2]) {
-				while (ns.hacknet.spendHashes("Sell for Money")) { await ns.sleep(1); }
-				await ns.sleep(1000);
+				if (h4ck.numHashes() > Math.trunc(h4ck.hashCapacity() * 0.75)) {
+					while (h4ck.numHashes() > Math.trunc(h4ck.hashCapacity() * 0.5)) {
+						h4ck.spendHashes("Sell for Money");
+					}
+				} else { await ns.sleep(1000); }
 			}
 			switch (nextdex[1]) {
 				case -1:
-					ns.hacknet.purchaseNode();
+					h4ck.purchaseNode();
 					ns.print("Expanding Hacknet");
 					break;
 				case 0:
-					ns.hacknet.upgradeLevel(nextdex[0]);
-					ns.print("Upgrading " + ns.hacknet.getNodeStats(nextdex[0]).name + " level");
+					h4ck.upgradeLevel(nextdex[0]);
+					ns.print("Upgrading " + h4ck.getNodeStats(nextdex[0]).name + " level");
 					break;
 				case 1:
-					ns.hacknet.upgradeRam(nextdex[0]);
-					ns.print("Upgrading " + ns.hacknet.getNodeStats(nextdex[0]).name + " RAM");
+					h4ck.upgradeRam(nextdex[0]);
+					ns.print("Upgrading " + h4ck.getNodeStats(nextdex[0]).name + " RAM");
 					break;
 				case 2:
-					ns.hacknet.upgradeCore(nextdex[0]);
-					ns.print("Upgrading " + ns.hacknet.getNodeStats(nextdex[0]).name + " core");
+					h4ck.upgradeCore(nextdex[0]);
+					ns.print("Upgrading " + h4ck.getNodeStats(nextdex[0]).name + " core");
 					break;
 				case 3:
-					ns.hacknet.upgradeCache(nextdex[0]);
-					ns.print("Upgrading " + ns.hacknet.getNodeStats(nextdex[0]).name + " cache");
+					h4ck.upgradeCache(nextdex[0]);
+					ns.print("Upgrading " + h4ck.getNodeStats(nextdex[0]).name + " cache");
 			}
 		}
 	}

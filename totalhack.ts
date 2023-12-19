@@ -1,9 +1,9 @@
 import { NS } from "@ns";
-import * as BitLib from "./bitlib";
+import { masterLister } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
 	let formsexe = ns.fileExists("Formulas.exe", "home");
-	let masterlist = BitLib.masterLister(ns);
+	let masterlist = masterLister(ns);
 	for (const target of masterlist) { ns.scriptKill("manhack.js", target); }
 	let ramlist = masterlist.filter(server => ns.getServerMaxRam(server) > 0);
 	for (const target of ramlist) { ns.scp("manhack.js", target); }
@@ -91,7 +91,7 @@ export async function main(ns: NS): Promise<void> {
 				else { looping = false; }
 			}
 		}
-		let checklist = BitLib.masterLister(ns);
+		let checklist = masterLister(ns);
 		if (checklist.length > masterlist.length) {
 			for (const server of checklist) { if (!masterlist.includes(server)) { masterlist.push(server); } }
 			for (const target of masterlist) {

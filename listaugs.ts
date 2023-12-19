@@ -1,10 +1,10 @@
 import { NS } from "@ns";
-import * as BitLib from "./bitlib";
+import { desiredfactions } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	const playerfacs = (ns.args[0] == true);
 	const playeraugs = ns.singularity.getOwnedAugmentations(true);
 	let auglist = [] as string[];
-	for (const faction of BitLib.desiredfactions) {
+	for (const faction of desiredfactions) {
 		const factaugs = ns.singularity.getAugmentationsFromFaction(faction);
 		for (const targaug of factaugs) { if (!auglist.includes(targaug) && !playeraugs.includes(targaug)) { auglist.push(targaug); } }
 	}
