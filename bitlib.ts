@@ -1,9 +1,10 @@
-import { CompanyName, NS } from "@ns";
+import { CityName, CompanyName, NS, Player, SleevePerson } from "@ns";
 
 /**
  * A hardcoded list of most of the normal factions in the game, ordered in a rough descending list of work priority. 
  */
-export const desiredfactions = ["Netburners", //0, hacknet upgrades, cheap and usually helpful
+export const desiredfactions = [
+	"Netburners", //0, hacknet upgrades, cheap and usually helpful
 	"Tian Di Hui", //1, focus penalty removal aug is considered high priority
 	"Sector-12", //2, cashroot kit is early and useful
 	"Aevum", //3, pcmatrix is a very good aug to have
@@ -33,17 +34,8 @@ export const desiredfactions = ["Netburners", //0, hacknet upgrades, cheap and u
 	"MegaCorp",
 	"KuaiGong International",
 	"Silhouette",
-	"The Covenant"];
-
-export const companyFactions = ["Bachman & Associates",
-	"ECorp",
-	"Fulcrum Technologies",
-	"Clarke Incorporated",
-	"OmniTek Incorporated",
-	"NWO",
-	"Blade Industries",
-	"MegaCorp",
-	"KuaiGong International"] as CompanyName[];
+	"The Covenant"
+];
 
 export function quietTheBabblingThrong(ns: NS): void {
 	ns.disableLog('disableLog');
@@ -69,7 +61,7 @@ export function netScan(ns: NS): string[][] {
 	excludedservers.push("darkweb");
 	let currentserver = "home";
 	let scanservers = ["home"];
-	let knownservers = [] as Array<string>;
+	let knownservers = [] as string[];
 	let servermap = [["home", "home"]];
 	while (scanservers.length > 0) {
 		currentserver = scanservers[0];
@@ -138,15 +130,15 @@ export function masterLister(ns: NS): string[] {
 
 /**
  * Returns an array of the string and level of the lowest of the player's combat stats.
- * RAM cost: 0.5 GB
+ * RAM cost: 0 GB
  * @param ns BitBurner NS object
  * @returns an array of the string and number of the lowest combat stat
  */
-export function lowestCombatStat(ns: NS): [string, number] {
-	const strength = ["strength", ns.getPlayer().skills.strength] as [string, number];
-	const defense = ["defense", ns.getPlayer().skills.defense] as [string, number];
-	const dexterity = ["dexterity", ns.getPlayer().skills.dexterity] as [string, number];
-	const agility = ["agility", ns.getPlayer().skills.agility] as [string, number];
+export function lowestCombatStat(ns: NS, target: Player | SleevePerson): [string, number] {
+	const strength = ["strength", target.skills.strength] as [string, number];
+	const defense = ["defense", target.skills.defense] as [string, number];
+	const dexterity = ["dexterity", target.skills.dexterity] as [string, number];
+	const agility = ["agility", target.skills.agility] as [string, number];
 	let loweststat = strength;
 	if (defense[1] < loweststat[1]) { loweststat = defense; }
 	if (dexterity[1] < loweststat[1]) { loweststat = dexterity; }
@@ -184,88 +176,85 @@ export function hasFocusPenalty(ns: NS): boolean {
 export function factionHasAugs(ns: NS, faction: string): boolean {
 	let factionaugs = ns.singularity.getAugmentationsFromFaction(faction);
 	factionaugs = factionaugs.filter(aug => !ns.singularity.getOwnedAugmentations(true).includes(aug));
-	if (ns.gang.inGang()) {
+	if (ns.gang.inGang() && ns.gang.getGangInformation().faction != faction) {
 		factionaugs = factionaugs.filter(aug => ns.singularity.getAugmentationsFromFaction(ns.gang.getGangInformation().faction).includes(aug));
 	}
 	return (factionaugs.length > 0);
 }
 
+export function getCompanyJob(ns: NS): CompanyName | undefined {
+	const companyFactions = ["Bachman & Associates",
+		"ECorp",
+		"Fulcrum Technologies",
+		"Clarke Incorporated",
+		"OmniTek Incorporated",
+		"NWO",
+		"Blade Industries",
+		"MegaCorp",
+		"KuaiGong International"] as CompanyName[];
+	return companyFactions.find(fac => ns.getPlayer().jobs[fac] != undefined);
+}
+
+export function quitEveryJob(ns: NS): void {
+	let playerjob = getCompanyJob(ns);
+	while (playerjob != undefined) {
+		ns.singularity.quitJob(playerjob);
+		playerjob = getCompanyJob(ns);
+	}
+}
+
+export async function wageSlavery(ns: NS, focus: boolean): Promise<void> {
+	let job = getCompanyJob(ns);
+	if (job != undefined) {
+		ns.singularity.applyToCompany(job, "IT");
+		ns.singularity.workForCompany(job, focus);
+		await ns.sleep(10000);
+	}
+	ns.singularity.stopAction();
+}
+
 /**
  * A function to run while waiting for money to afford something, commits homicide if the chance is at least 50%, mugs otherwise.
- * If passed a company that had a valid job, will assign work there instead.
+ * If a faction company job is detected it will work there instead.
  * RAM cost: 64/16/4 GB
  * @param ns BitBurner NS object
- * @param focus boolean for if the crime should be focused on
- * @param job optional argument to pass a job as CompanyName
+ * @param focus boolean for if the work should be focused on
  */
-export async function moneyTimeKill(ns: NS, focus: boolean, job?: CompanyName): Promise<void> {
-	if (job != undefined) {
-		ns.singularity.workForCompany(job, focus);
-		await ns.sleep(4000);
-	}
+export async function moneyTimeKill(ns: NS, focus: boolean): Promise<void> {
+	if (getCompanyJob(ns) != undefined) { await wageSlavery(ns, focus); }
 	else if (ns.singularity.getCrimeChance("Homicide") > 0.5) { await ns.sleep(ns.singularity.commitCrime("Homicide", focus)); }
 	else { await ns.sleep(ns.singularity.commitCrime("Mug", focus)); }
 	ns.singularity.stopAction();
 }
 
-export async function trainCombat(ns: NS, target: number, focus: boolean): Promise<void> {
-	let combatstats = lowestCombatStat(ns);
-	while (!ns.singularity.travelToCity("Sector-12")) { await moneyTimeKill(ns, focus); }
+export async function cityTravel(ns: NS, target: string, focus: boolean): Promise<void> {
+	let citytarg = target as CityName;
+	if (citytarg != ns.getPlayer().city) { while (!ns.singularity.travelToCity(citytarg)) { await moneyTimeKill(ns, focus); } }
+}
+
+export async function trainPlayerCombat(ns: NS, target: number, focus: boolean): Promise<void> {
+	let combatstats = lowestCombatStat(ns, ns.getPlayer());
+	await cityTravel(ns, "Sector-12", focus);
 	while (combatstats[1] < target) {
 		ns.singularity.gymWorkout("Powerhouse Gym", combatstats[0], focus);
 		await ns.sleep(1000);
-		combatstats = lowestCombatStat(ns);
+		combatstats = lowestCombatStat(ns, ns.getPlayer());
 	}
 	ns.singularity.stopAction();
 }
 
 export async function trainHacking(ns: NS, target: number, focus: boolean): Promise<void> {
-	while (!ns.singularity.travelToCity("Volhaven")) { await moneyTimeKill(ns, focus); }
+	await cityTravel(ns, "Volhaven", focus);
 	ns.singularity.universityCourse("ZB Institute of Technology", "Algorithms", focus);
 	while (ns.getHackingLevel() < target) { await ns.sleep(1000); }
 	ns.singularity.stopAction();
 }
 
 export async function trainCharisma(ns: NS, target: number, focus: boolean): Promise<void> {
-	while (!ns.singularity.travelToCity("Volhaven")) { await moneyTimeKill(ns, focus); }
+	await cityTravel(ns, "Volhaven", focus);
 	ns.singularity.universityCourse("ZB Institute of Technology", "Leadership", focus);
 	while (ns.getPlayer().skills.charisma < target) { await ns.sleep(1000); }
 	ns.singularity.stopAction();
-}
-
-/**
- * Ensures the requirements for a crime faction can be met by reaching certain goals.
- * RAM cost: 96.5/24.5/6.5 GB
- * @param ns BitBurner NS object
- * @param stats numerical combat stat requirement to reach
- * @param karma negative numerical karma to reach
- * @param focus boolean for if the tasks should be focused on
- */
-export async function setupCrimeFaction(ns: NS, stats: number, karma: number, focus: boolean): Promise<void> {
-	await trainCombat(ns, stats, focus);
-	let currentkarma = getKarma(ns);
-	while (currentkarma > karma) {
-		if (ns.singularity.getCrimeChance("Homicide") > 0.5) { await ns.sleep(ns.singularity.commitCrime("Homicide", focus)); }
-		else { await ns.sleep(ns.singularity.commitCrime("Mug", focus)); }
-	}
-	ns.singularity.stopAction();
-}
-
-/**
- * Ensures the requirements for a hacker faction can be met by backdooring a specific server when possible.
- * RAM cost: 132.75/38.75/14.75 GB
- * @param ns BitBurner NS object
- * @param server string of server to backdoor
- * @param focus boolean of if the task should be focused on
- */
-export async function setupHackFaction(ns: NS, server: string, focus: boolean): Promise<void> {
-	if (!ns.getServer(server).backdoorInstalled) {
-		while (!popTheHood(ns, server)) { await trainHacking(ns, ns.getServerRequiredHackingLevel(server), focus); }
-		while (ns.getServerRequiredHackingLevel(server) > ns.getHackingLevel()) { await trainHacking(ns, ns.getServerRequiredHackingLevel(server), focus); }
-		remoteConnect(ns, server);
-		await ns.singularity.installBackdoor();
-		ns.singularity.connect("home");
-	}
 }
 
 /**
@@ -280,3 +269,199 @@ export function getHacknetIndex(ns: NS, name: string): number {
 	for (let i = 0; i < ns.hacknet.numNodes(); i++) { hacknets.push(ns.hacknet.getNodeStats(i).name); }
 	return hacknets.indexOf(name);
 }
+
+export function createWorklist(ns: NS, length: number): string[] {
+	const playeraugs = ns.singularity.getOwnedAugmentations(true);
+	let auglist = [] as string[];
+	for (const faction of desiredfactions) {
+		const factaugs = ns.singularity.getAugmentationsFromFaction(faction);
+		for (const targaug of factaugs) { if (!auglist.includes(targaug) && !playeraugs.includes(targaug)) { auglist.push(targaug); } }
+	}
+	auglist.sort((a, b) => { return ns.singularity.getAugmentationRepReq(b) - ns.singularity.getAugmentationRepReq(a); })
+	auglist = auglist.filter(aug => ns.singularity.getAugmentationPrereq(aug).every(aug => playeraugs.includes(aug)))
+	auglist = auglist.filter(aug => ns.singularity.getAugmentationFactions(aug).some(fac => ns.getPlayer().factions.includes(fac))).slice(-1 * length);
+	auglist.sort((a, b) => { return ns.singularity.getAugmentationPrice(b) - ns.singularity.getAugmentationPrice(a); })
+	return auglist;
+}
+
+export const hackFactions = [
+	"Netburners",
+	"CyberSec",
+	"NiteSec",
+	"The Black Hand",
+	"BitRunners",
+	"Fulcrum Secret Technologies"
+];
+
+export async function joinFirstHackers(ns: NS, focus: boolean): Promise<void> {
+	const hackFactionsMask = [
+		undefined,
+		"CSEC",
+		"avmnite-02h",
+		"I.I.I.I",
+		"run4theh111z",
+		"fulcrumassets"
+	];
+	let target = hackFactions.find(fac => factionHasAugs(ns, fac));
+	if (target != undefined && !ns.getPlayer().factions.includes(target)) {
+		let server = hackFactionsMask[hackFactions.indexOf(target)];
+		if (server != undefined) {
+			let hacktarg = ns.getServerRequiredHackingLevel(server);
+			if (!ns.getServer(server).backdoorInstalled) {
+				popTheHood(ns, server);
+				while (hacktarg > ns.getHackingLevel()) { await trainHacking(ns, hacktarg, focus); }
+				remoteConnect(ns, server);
+				await ns.singularity.installBackdoor();
+				ns.singularity.connect("home");
+			}
+			if (target != "Fulcrum Secret Technologies") {
+				while (!ns.singularity.checkFactionInvitations().includes(target)) { await moneyTimeKill(ns, focus); }
+				ns.singularity.joinFaction(target);
+			}
+		} else {
+			while (!ns.singularity.checkFactionInvitations().includes(target)) { await trainHacking(ns, 80, focus); }
+			ns.singularity.joinFaction(target);
+		}
+		ns.singularity.stopAction();
+	}
+}
+
+export async function joinCityFactions(ns: NS, focus: boolean): Promise<void> {
+	const cityfactions = [["Sector-12", "Aevum"], ["Chongqing", "New Tokyo", "Ishima"], ["Volhaven"]];
+	let target = cityfactions[0].find(fac => factionHasAugs(ns, fac));
+	if (target != undefined) {
+		for (const city of cityfactions[0]) {
+			if (!ns.getPlayer().factions.includes(city)) {
+				await cityTravel(ns, city, focus);
+				while (!ns.singularity.checkFactionInvitations().includes(city)) { await moneyTimeKill(ns, focus); }
+				ns.singularity.joinFaction(city);
+			}
+		}
+	} else {
+		target = cityfactions[1].find(fac => factionHasAugs(ns, fac));
+		if (target != undefined) {
+			for (const city of cityfactions[1]) {
+				if (!ns.getPlayer().factions.includes(city)) {
+					await cityTravel(ns, city, focus);
+					while (!ns.singularity.checkFactionInvitations().includes(city)) { await moneyTimeKill(ns, focus); }
+					ns.singularity.joinFaction(city);
+				}
+			}
+		} else {
+			target = cityfactions[2].find(fac => factionHasAugs(ns, fac));
+			if (target != undefined) {
+				for (const city of cityfactions[2]) {
+					if (!ns.getPlayer().factions.includes(city)) {
+						await cityTravel(ns, city, focus);
+						while (!ns.singularity.checkFactionInvitations().includes(city)) { await moneyTimeKill(ns, focus); }
+						ns.singularity.joinFaction(city);
+					}
+				}
+			}
+		}
+	}
+	ns.singularity.stopAction();
+}
+
+export const companyFactions = [
+	"Bachman & Associates",
+	"ECorp",
+	"Fulcrum Secret Technologies",
+	"Clarke Incorporated",
+	"OmniTek Incorporated",
+	"NWO",
+	"Blade Industries",
+	"MegaCorp",
+	"KuaiGong International"
+];
+
+export async function joinFirstCompany(ns: NS, focus: boolean): Promise<void> {
+	quitEveryJob(ns);
+	const companyFactionsMask = [
+		"Bachman & Associates",
+		"ECorp",
+		"Fulcrum Technologies",
+		"Clarke Incorporated",
+		"OmniTek Incorporated",
+		"NWO",
+		"Blade Industries",
+		"MegaCorp",
+		"KuaiGong International"
+	] as CompanyName[];
+	let target = companyFactions.find(fac => (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)));
+	if (target != undefined) {
+		let targetjob = companyFactionsMask[companyFactions.indexOf(target)];
+		await trainHacking(ns, ns.singularity.getCompanyPositionInfo(targetjob, "IT Intern").requiredSkills.hacking, focus);
+		ns.singularity.applyToCompany(targetjob, "IT");
+		ns.singularity.stopAction();
+	}
+}
+
+export const crimeFactions = [
+	"Tian Di Hui",
+	"Slum Snakes",
+	"Tetrads",
+	"The Syndicate",
+	"The Dark Army",
+	"Speakers for the Dead",
+	"Silhouette"
+];
+
+export async function joinFirstCrime(ns: NS, focus: boolean): Promise<void> {
+	const crimeFactionsMask = [
+		[0, 0, "Chongqing"],
+		[30, -9, undefined],
+		[75, -18, "Chongqing"],
+		[200, -90, "Sector-12"],
+		[300, -45, "Chongqing"],
+		[300, -45, undefined],
+		[0, -22, undefined]
+	];
+	let target = crimeFactions.find(fac => (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)));
+	if (target != undefined) {
+		let crimereqs = crimeFactionsMask[companyFactions.indexOf(target)];
+		await trainPlayerCombat(ns, crimereqs[0] as number, focus);
+		while (getKarma(ns) > (crimereqs[1] as number)) {
+			if (ns.singularity.getCrimeChance("Homicide") > 0.5) { await ns.sleep(ns.singularity.commitCrime("Homicide", focus)); }
+			else { await ns.sleep(ns.singularity.commitCrime("Mug", focus)); }
+		}
+		if (crimereqs[2] != undefined) { await cityTravel(ns, crimereqs[2] as string, focus); }
+		if (target != "Silhouette") {
+			while (!ns.singularity.checkFactionInvitations().includes(target)) { await moneyTimeKill(ns, focus); }
+			ns.singularity.joinFaction(target);
+		}
+		ns.singularity.stopAction();
+	}
+}
+
+/*
+fac = desiredfactions[10];	//Daedalus
+if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
+	if (ns.singularity.getOwnedAugmentations(false).length >= 30 + ns.getBitNodeMultipliers().DaedalusAugsRequirement) {
+		if (joincount < 1) {
+			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await moneyTimeKill(ns, focus); }
+			if (ns.singularity.joinFaction(fac)) { joincount++; }
+		}
+	}
+}
+fac = desiredfactions[29];	//The Covenant
+if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
+	if (ns.singularity.getOwnedAugmentations(false).length >= 20) {
+		if (lowestCombatStat(ns, ns.getPlayer())[1] > 700 || joincount < 1) {
+			await setupCrimeFaction(ns, 850, 0, focus);
+			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await moneyTimeKill(ns, focus); }
+			if (ns.singularity.joinFaction(fac)) { joincount++; }
+		}
+	}
+}
+fac = desiredfactions[21];	//Illuminati
+if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
+	if (ns.singularity.getOwnedAugmentations(false).length >= 30) {
+		if (lowestCombatStat(ns, ns.getPlayer())[1] > 1000 || joincount < 1) {
+			await setupCrimeFaction(ns, 1200, 0, focus);
+			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await moneyTimeKill(ns, focus); }
+			if (ns.singularity.joinFaction(fac)) { joincount++; }
+		}
+	}
+}
+*/

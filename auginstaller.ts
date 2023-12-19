@@ -22,9 +22,9 @@ export async function main(ns: NS): Promise<void> {
 	if (ns.getResetInfo().currentNode == 2 && ns.gang.inGang()) { ns.singularity.purchaseAugmentation(ns.gang.getGangInformation().faction, "The Red Pill"); }
 	else { ns.singularity.purchaseAugmentation("Daedalus", "The Red Pill"); }
 	//if (ns.singularity.exportGameBonus()) { ns.singularity.exportGame(); }
-	if (!(ns.singularity.getOwnedAugmentations().includes("The Red Pill") && (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel("w0r1d_d43m0n")))) {
-		ns.singularity.installAugmentations("setup.js");
-	} else {
+	if (ns.singularity.getOwnedAugmentations().includes("The Red Pill") && (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel("w0r1d_d43m0n"))) {
 		ns.tprint("GO BACKDOOR w0r1d_d43m0n");
+	} else {
+		ns.singularity.installAugmentations("setup.js");
 	}
 }
