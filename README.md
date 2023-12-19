@@ -13,8 +13,6 @@ Current scripts and their functions:
 - connecter - currently just prints a network path to a server passed as an argument, might make it attempt connect() chains later on
 
 - nettrawler - iterates over the network and hacks and backdoors as many as possible
-- autoprogram - codes the programs in turn except for the last two, which it buys TOR to buy them with
-- sourcefiler - creates a txt file with the current source files owned including the currently accessed node
 - listaugs - prints to the log all unowned and faction available augments filtered by a list of desireable stats, awaiting further work
 - ironpumper - automatically works out at powerhouse gym in sector-12 until all stats are at least a given number
 

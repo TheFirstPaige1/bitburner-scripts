@@ -1,9 +1,9 @@
 import { NS } from "@ns";
-import { hasFocusPenalty, quietTheBabblingThrong } from "./bitlib";
+import * as BitLib from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	const targetcost = 25000000;
-	quietTheBabblingThrong(ns);
-	if (hasFocusPenalty(ns)) { ns.tail(); }
+	BitLib.quietTheBabblingThrong(ns);
+	if (BitLib.hasFocusPenalty(ns)) { ns.tail(); }
 	let running = true;
 	while (running) {
 		let costarray = [];

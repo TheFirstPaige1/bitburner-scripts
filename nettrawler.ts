@@ -1,18 +1,17 @@
 import { NS } from "@ns";
-import { masterLister } from "./bitlib";
-import { remoteConnect } from "./bitlib";
+import * as BitLib from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	if (!ns.fileExists("networkmap.txt", "home")) { ns.run("netscanner.js"); }
 	let excludedservers = ns.getPurchasedServers();
 	for (let i = 0; i < ns.hacknet.numNodes(); i++) { excludedservers.push(ns.hacknet.getNodeStats(i).name); }
 	excludedservers.push("w0r1d_d43m0n");
 	excludedservers.push("darkweb");
-	let masterlist = masterLister(ns);
+	let masterlist = BitLib.masterLister(ns);
 	masterlist = masterlist.filter(server => !excludedservers.includes(server));
 	let doorcount = [];
 	for (const server of masterlist) {
 		if (ns.getServerRequiredHackingLevel(server) <= ns.getHackingLevel() && !ns.getServer(server).backdoorInstalled) {
-			remoteConnect(ns, server);
+			BitLib.remoteConnect(ns, server);
 			doorcount.push(ns.exec("mandoor.js", "home"));
 			await ns.sleep(1);
 		}

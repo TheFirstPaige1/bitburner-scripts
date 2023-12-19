@@ -1,8 +1,8 @@
 import { NS } from "@ns";
-import { netScan } from "./bitlib";
+import * as BitLib from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	const target = ns.args[0] as string;
-	const networkmap = netScan(ns);
+	const networkmap = BitLib.netScan(ns);
 	let next = target;
 	let netpath = [target];
 	for (let i = networkmap.length - 1; i > 0; i--) {

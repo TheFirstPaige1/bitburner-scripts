@@ -45,6 +45,7 @@ export function quietTheBabblingThrong(ns: NS): void {
 	ns.disableLog('singularity.commitCrime');
 	ns.disableLog('singularity.gymWorkout');
 	ns.disableLog('singularity.applyToCompany');
+	ns.disableLog('singularity.workForCompany');
 }
 
 /**
@@ -326,11 +327,20 @@ export async function joinFirstHackers(ns: NS, focus: boolean): Promise<void> {
 	}
 }
 
+export const cityFactions = [
+	"Sector-12",
+	"Aevum",
+	"Chongqing",
+	"New Tokyo",
+	"Ishima",
+	"Volhaven"
+];
+
 export async function joinCityFactions(ns: NS, focus: boolean): Promise<void> {
-	const cityfactions = [["Sector-12", "Aevum"], ["Chongqing", "New Tokyo", "Ishima"], ["Volhaven"]];
-	let target = cityfactions[0].find(fac => factionHasAugs(ns, fac));
+	const cityFactionsMask = [["Sector-12", "Aevum"], ["Chongqing", "New Tokyo", "Ishima"], ["Volhaven"]];
+	let target = cityFactionsMask[0].find(fac => factionHasAugs(ns, fac));
 	if (target != undefined) {
-		for (const city of cityfactions[0]) {
+		for (const city of cityFactionsMask[0]) {
 			if (!ns.getPlayer().factions.includes(city)) {
 				await cityTravel(ns, city, focus);
 				while (!ns.singularity.checkFactionInvitations().includes(city)) { await moneyTimeKill(ns, focus); }
@@ -338,9 +348,9 @@ export async function joinCityFactions(ns: NS, focus: boolean): Promise<void> {
 			}
 		}
 	} else {
-		target = cityfactions[1].find(fac => factionHasAugs(ns, fac));
+		target = cityFactionsMask[1].find(fac => factionHasAugs(ns, fac));
 		if (target != undefined) {
-			for (const city of cityfactions[1]) {
+			for (const city of cityFactionsMask[1]) {
 				if (!ns.getPlayer().factions.includes(city)) {
 					await cityTravel(ns, city, focus);
 					while (!ns.singularity.checkFactionInvitations().includes(city)) { await moneyTimeKill(ns, focus); }
@@ -348,9 +358,9 @@ export async function joinCityFactions(ns: NS, focus: boolean): Promise<void> {
 				}
 			}
 		} else {
-			target = cityfactions[2].find(fac => factionHasAugs(ns, fac));
+			target = cityFactionsMask[2].find(fac => factionHasAugs(ns, fac));
 			if (target != undefined) {
-				for (const city of cityfactions[2]) {
+				for (const city of cityFactionsMask[2]) {
 					if (!ns.getPlayer().factions.includes(city)) {
 						await cityTravel(ns, city, focus);
 						while (!ns.singularity.checkFactionInvitations().includes(city)) { await moneyTimeKill(ns, focus); }
@@ -397,6 +407,26 @@ export async function joinFirstCompany(ns: NS, focus: boolean): Promise<void> {
 	}
 }
 
+export async function graduateCompany(ns: NS, focus: boolean): Promise<void> {
+	const companyFactionsMask = [
+		"Bachman & Associates",
+		"ECorp",
+		"Fulcrum Technologies",
+		"Clarke Incorporated",
+		"OmniTek Incorporated",
+		"NWO",
+		"Blade Industries",
+		"MegaCorp",
+		"KuaiGong International"
+	] as CompanyName[];
+	let target = getCompanyJob(ns);
+	if (target != undefined) {
+		let targfac = companyFactions[companyFactionsMask.indexOf(target)]
+		while (!ns.singularity.checkFactionInvitations().includes(targfac)) { await wageSlavery(ns, focus); }
+		ns.singularity.joinFaction(targfac);
+	}
+}
+
 export const crimeFactions = [
 	"Tian Di Hui",
 	"Slum Snakes",
@@ -417,9 +447,9 @@ export async function joinFirstCrime(ns: NS, focus: boolean): Promise<void> {
 		[300, -45, undefined],
 		[0, -22, undefined]
 	];
-	let target = crimeFactions.find(fac => (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)));
-	if (target != undefined) {
-		let crimereqs = crimeFactionsMask[companyFactions.indexOf(target)];
+	let target = crimeFactions.find(fac => factionHasAugs(ns, fac));
+	if (target != undefined && !ns.getPlayer().factions.includes(target)) {
+		let crimereqs = crimeFactionsMask[crimeFactions.indexOf(target)];
 		await trainPlayerCombat(ns, crimereqs[0] as number, focus);
 		while (getKarma(ns) > (crimereqs[1] as number)) {
 			if (ns.singularity.getCrimeChance("Homicide") > 0.5) { await ns.sleep(ns.singularity.commitCrime("Homicide", focus)); }
@@ -427,41 +457,39 @@ export async function joinFirstCrime(ns: NS, focus: boolean): Promise<void> {
 		}
 		if (crimereqs[2] != undefined) { await cityTravel(ns, crimereqs[2] as string, focus); }
 		if (target != "Silhouette") {
-			while (!ns.singularity.checkFactionInvitations().includes(target)) { await moneyTimeKill(ns, focus); }
+			while (!ns.singularity.checkFactionInvitations().includes(target)) {
+				if (ns.singularity.getCrimeChance("Homicide") > 0.5) { await ns.sleep(ns.singularity.commitCrime("Homicide", focus)); }
+				else { await ns.sleep(ns.singularity.commitCrime("Mug", focus)); }
+			}
 			ns.singularity.joinFaction(target);
 		}
 		ns.singularity.stopAction();
 	}
 }
 
-/*
-fac = desiredfactions[10];	//Daedalus
-if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
-	if (ns.singularity.getOwnedAugmentations(false).length >= 30 + ns.getBitNodeMultipliers().DaedalusAugsRequirement) {
-		if (joincount < 1) {
-			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await moneyTimeKill(ns, focus); }
-			if (ns.singularity.joinFaction(fac)) { joincount++; }
+export const secretFactions = [
+	"Daedalus",
+	"The Covenant",
+	"Illuminati"
+];
+
+export async function joinFirstSecret(ns: NS, focus: boolean): Promise<void> {
+	const secretFactionsMask = [
+		[30 + ns.getBitNodeMultipliers().DaedalusAugsRequirement, 2500, 1500],
+		[20, 850, 850],
+		[30, 1500, 1200]
+	];
+	let target = secretFactions.find(fac => factionHasAugs(ns, fac));
+	if (target != undefined && !ns.getPlayer().factions.includes(target)) {
+		let secretreqs = secretFactionsMask[secretFactions.indexOf(target)];
+		if (ns.singularity.getOwnedAugmentations(false).length >= secretreqs[0]) {
+			await trainHacking(ns, secretreqs[1], focus);
+			if (ns.singularity.checkFactionInvitations().includes(target)) { ns.singularity.joinFaction(target); }
+			else {
+				await trainPlayerCombat(ns, secretreqs[2], focus);
+				while (!ns.singularity.checkFactionInvitations().includes(target)) { await moneyTimeKill(ns, focus); }
+				ns.singularity.joinFaction(target);
+			}
 		}
 	}
 }
-fac = desiredfactions[29];	//The Covenant
-if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
-	if (ns.singularity.getOwnedAugmentations(false).length >= 20) {
-		if (lowestCombatStat(ns, ns.getPlayer())[1] > 700 || joincount < 1) {
-			await setupCrimeFaction(ns, 850, 0, focus);
-			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await moneyTimeKill(ns, focus); }
-			if (ns.singularity.joinFaction(fac)) { joincount++; }
-		}
-	}
-}
-fac = desiredfactions[21];	//Illuminati
-if (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)) {
-	if (ns.singularity.getOwnedAugmentations(false).length >= 30) {
-		if (lowestCombatStat(ns, ns.getPlayer())[1] > 1000 || joincount < 1) {
-			await setupCrimeFaction(ns, 1200, 0, focus);
-			while (!ns.singularity.checkFactionInvitations().includes(fac)) { await moneyTimeKill(ns, focus); }
-			if (ns.singularity.joinFaction(fac)) { joincount++; }
-		}
-	}
-}
-*/

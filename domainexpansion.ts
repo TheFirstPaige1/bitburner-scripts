@@ -1,9 +1,9 @@
 import { NS } from "@ns";
-import { getHacknetIndex, hasFocusPenalty } from "./bitlib";
+import * as BitLib from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('sleep');
 	ns.disableLog('getServerMaxRam');
-	if (hasFocusPenalty(ns)) { ns.tail(); }
+	if (BitLib.hasFocusPenalty(ns)) { ns.tail(); }
 	let ramlimit = ns.getServerMaxRam("home");
 	let pservlimit = Math.min(ramlimit, ns.getPurchasedServerMaxRam());
 	let serverlimit = ns.getPurchasedServerLimit();
@@ -34,14 +34,14 @@ export async function main(ns: NS): Promise<void> {
 		let nexthackcachecost = Infinity;
 		if (ns.hacknet.numNodes() > 0) {
 			for (let i = 0; i < ns.hacknet.numNodes(); i++) { hacknets.push(ns.hacknet.getNodeStats(i)); }
-			nexthacklevel = getHacknetIndex(ns, hacknets.sort((a, b) => { return a.level - b.level; })[0].name);
+			nexthacklevel = BitLib.getHacknetIndex(ns, hacknets.sort((a, b) => { return a.level - b.level; })[0].name);
 			nexthacklevelcost = ns.hacknet.getLevelUpgradeCost(nexthacklevel);
-			nexthackram = getHacknetIndex(ns, hacknets.sort((a, b) => { return a.ram - b.ram; })[0].name);
+			nexthackram = BitLib.getHacknetIndex(ns, hacknets.sort((a, b) => { return a.ram - b.ram; })[0].name);
 			nexthackramcost = ns.hacknet.getRamUpgradeCost(nexthackram);
 			if (ns.hacknet.getNodeStats(nexthackram).ram >= ramlimit) { nexthackramcost = Infinity; }
-			nexthackcore = getHacknetIndex(ns, hacknets.sort((a, b) => { return a.cores - b.cores; })[0].name);
+			nexthackcore = BitLib.getHacknetIndex(ns, hacknets.sort((a, b) => { return a.cores - b.cores; })[0].name);
 			nexthackcorecost = ns.hacknet.getCoreUpgradeCost(nexthackcore);
-			nexthackcache = getHacknetIndex(ns, hacknets.sort((a, b) => {
+			nexthackcache = BitLib.getHacknetIndex(ns, hacknets.sort((a, b) => {
 				if (a.cache != undefined && b.cache != undefined) { return a.cache - b.cache; }
 				else { return 0; }
 			})[0].name);
