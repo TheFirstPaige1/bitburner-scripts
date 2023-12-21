@@ -56,10 +56,10 @@ export function quietTheBabblingThrong(ns: NS): void {
  * @returns an array containing server name string pair arrays
  */
 export function netScan(ns: NS): string[][] {
-	let excludedservers = ns.getPurchasedServers();
+	/*let excludedservers = ns.getPurchasedServers();
 	for (let i = 0; i < ns.hacknet.numNodes(); i++) { excludedservers.push(ns.hacknet.getNodeStats(i).name); }
 	excludedservers.push("w0r1d_d43m0n");
-	excludedservers.push("darkweb");
+	excludedservers.push("darkweb");*/
 	let currentserver = "home";
 	let scanservers = ["home"];
 	let knownservers = [] as string[];
@@ -68,7 +68,7 @@ export function netScan(ns: NS): string[][] {
 		currentserver = scanservers[0];
 		knownservers.push(currentserver);
 		for (const scantarg of ns.scan(currentserver)) {
-			if (!scanservers.includes(scantarg) && !knownservers.includes(scantarg) && !excludedservers.includes(scantarg)) {
+			if (!scanservers.includes(scantarg) && !knownservers.includes(scantarg)/* && !excludedservers.includes(scantarg)*/) {
 				scanservers.push(scantarg);
 				servermap.push([scantarg, currentserver]);
 			}
@@ -92,7 +92,6 @@ export function popTheHood(ns: NS, target: string): boolean {
 
 /**
  * Attempts to connect to a given server by daisy-chaining between it and home.
- * Relies on an existing networkmap.txt.
  * RAM cost: 36.25/12.25/6.25 GB
  * @param ns BitBurner NS object
  * @param target string of the server to connect to
@@ -338,8 +337,7 @@ export const cityFactions = [
 
 export async function joinCityFactions(ns: NS, focus: boolean): Promise<void> {
 	const cityFactionsMask = [["Sector-12", "Aevum"], ["Chongqing", "New Tokyo", "Ishima"], ["Volhaven"]];
-	let target = cityFactionsMask[0].find(fac => factionHasAugs(ns, fac));
-	if (target != undefined) {
+	if (cityFactionsMask[0].some(fac => factionHasAugs(ns, fac))) {
 		for (const city of cityFactionsMask[0]) {
 			if (!ns.getPlayer().factions.includes(city)) {
 				await cityTravel(ns, city, focus);
@@ -348,8 +346,7 @@ export async function joinCityFactions(ns: NS, focus: boolean): Promise<void> {
 			}
 		}
 	} else {
-		target = cityFactionsMask[1].find(fac => factionHasAugs(ns, fac));
-		if (target != undefined) {
+		if (cityFactionsMask[1].some(fac => factionHasAugs(ns, fac))) {
 			for (const city of cityFactionsMask[1]) {
 				if (!ns.getPlayer().factions.includes(city)) {
 					await cityTravel(ns, city, focus);
@@ -358,8 +355,7 @@ export async function joinCityFactions(ns: NS, focus: boolean): Promise<void> {
 				}
 			}
 		} else {
-			target = cityFactionsMask[2].find(fac => factionHasAugs(ns, fac));
-			if (target != undefined) {
+			if (cityFactionsMask[2].some(fac => factionHasAugs(ns, fac))) {
 				for (const city of cityFactionsMask[2]) {
 					if (!ns.getPlayer().factions.includes(city)) {
 						await cityTravel(ns, city, focus);

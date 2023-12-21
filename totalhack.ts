@@ -21,7 +21,7 @@ export async function main(ns: NS): Promise<void> {
 			let target = targetList[i];
 			if (!ns.isRunning(pidList[i])) {
 				let ramserver = ramlist[0];
-				let freeram = Math.max(0, ns.getServerMaxRam(ramserver) - ns.getServerUsedRam(ramserver) - Math.max(Math.trunc(ns.getServerMaxRam(ramserver) / 4), 16));
+				let freeram = Math.max(0, ns.getServerMaxRam(ramserver) - ns.getServerUsedRam(ramserver) - Math.max(Math.trunc(ns.getServerMaxRam(ramserver) / 4), 128));
 				let mostfreeram = freeram;
 				for (let m = 1; m < ramlist.length; m++) {
 					freeram = ns.getServerMaxRam(ramlist[m]) - ns.getServerUsedRam(ramlist[m]);
