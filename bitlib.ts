@@ -18,7 +18,7 @@ export const desiredfactions = [
 	"Fulcrum Secret Technologies", //11, 
 	//"Four Sigma", - no unique augs, no point bothering tbh
 	"The Black Hand", //12, while ostensibly the third hack faction, only the unique aug is left between nitesec and bitrunners
-	"The Dark Army", //it's about here I have up on the idea of prioritising factions, so below here is largely unsorted
+	"The Dark Army", //it's about here I gave up on the idea of prioritising factions, so below here is largely unsorted
 	"Clarke Incorporated",
 	"OmniTek Incorporated",
 	"NWO",
@@ -37,6 +37,9 @@ export const desiredfactions = [
 	"The Covenant"
 ];
 
+/**
+ * A list of names for naming gang members with. Yes, those are Seinfield, Lucky Star, and Adventure Time character names. Sue me.
+ */
 export const gangNames = [
 	"Jerry",
 	"George",
@@ -52,6 +55,14 @@ export const gangNames = [
 	"Marcilene"
 ];
 
+/**
+ * A function for attempting to gather up all the usual log-disables I tend to use. 
+ * Probably going to phase this out, but the name reference is fun.
+ * RAM cost: 0 GB
+ * Functions used:
+ * ns.disableLog - 0 GB
+ * @param ns BitBurner NS object
+ */
 export function quietTheBabblingThrong(ns: NS): void {
 	ns.disableLog('disableLog');
 	ns.disableLog('sleep');
@@ -67,15 +78,13 @@ export function quietTheBabblingThrong(ns: NS): void {
 /**
  * Creates an array detailing the server network, in the form of string pairs. 
  * The first of a pair is the name of a server, the second is the name of the server that is one step closer to home.
- * RAM cost: 4.25 GB
+ * RAM cost: 0.2 GB
+ * Functions used: 
+ * ns.scan - 0.2 GB
  * @param ns BitBurner NS object
  * @returns an array containing server name string pair arrays
  */
 export function netScan(ns: NS): string[][] {
-	/*let excludedservers = ns.getPurchasedServers();
-	for (let i = 0; i < ns.hacknet.numNodes(); i++) { excludedservers.push(ns.hacknet.getNodeStats(i).name); }
-	excludedservers.push("w0r1d_d43m0n");
-	excludedservers.push("darkweb");*/
 	let currentserver = "home";
 	let scanservers = ["home"];
 	let knownservers = [] as string[];
@@ -84,7 +93,7 @@ export function netScan(ns: NS): string[][] {
 		currentserver = scanservers[0];
 		knownservers.push(currentserver);
 		for (const scantarg of ns.scan(currentserver)) {
-			if (!scanservers.includes(scantarg) && !knownservers.includes(scantarg)/* && !excludedservers.includes(scantarg)*/) {
+			if (!scanservers.includes(scantarg) && !knownservers.includes(scantarg)) {
 				scanservers.push(scantarg);
 				servermap.push([scantarg, currentserver]);
 			}
@@ -97,6 +106,14 @@ export function netScan(ns: NS): string[][] {
 /**
  * Attempts to open every port and nuke the given server, returning a boolean of root access.
  * RAM cost: 0.35 GB
+ * Functions used: 
+ * ns.brutessh - 0.05 GB
+ * ns.ftpcrack - 0.05 GB
+ * ns.relaysmtp - 0.05 GB
+ * ns.httpworm - 0.05 GB
+ * ns.sqlinject - 0.05 GB
+ * ns.nuke - 0.05 GB
+ * ns.hasRootAccess - 0.05 GB
  * @param ns BitBurner NS object
  * @param target string of the server to attempt to root
  * @returns true if root access was gained or already exists, false otherwise
@@ -108,7 +125,10 @@ export function popTheHood(ns: NS, target: string): boolean {
 
 /**
  * Attempts to connect to a given server by daisy-chaining between it and home.
- * RAM cost: 36.25/12.25/6.25 GB
+ * RAM cost: 32.2/8.2/2.2 GB
+ * Functions used: 
+ * ns.scan - 0.2 GB
+ * ns.singularity.connect - 32/8/2 GB
  * @param ns BitBurner NS object
  * @param target string of the server to connect to
  */
@@ -128,6 +148,15 @@ export function remoteConnect(ns: NS, target: string) {
 /**
  * Creates an array of strings of names of all the servers with current or possible root access.
  * RAM cost: 0.55 GB
+ * Functions used: 
+ * ns.scan - 0.2 GB
+ * ns.brutessh - 0.05 GB
+ * ns.ftpcrack - 0.05 GB
+ * ns.relaysmtp - 0.05 GB
+ * ns.httpworm - 0.05 GB
+ * ns.sqlinject - 0.05 GB
+ * ns.nuke - 0.05 GB
+ * ns.hasRootAccess - 0.05 GB
  * @param ns BitBurner NS object
  * @returns an array of all root-accessable server name strings
  */
@@ -145,9 +174,10 @@ export function masterLister(ns: NS): string[] {
 }
 
 /**
- * Returns an array of the string and level of the lowest of the player's combat stats.
+ * Returns an array of the string and level of the lowest of the combat stats of the player or sleeve passed as an argument.
  * RAM cost: 0 GB
  * @param ns BitBurner NS object
+ * @param target the player object, or that of a sleeve
  * @returns an array of the string and number of the lowest combat stat
  */
 export function lowestCombatStat(ns: NS, target: Player | SleevePerson): [string, number] {
@@ -175,6 +205,8 @@ export function getKarma(ns: NS): number {
 /**
  * Checks for the Neuroreceptor Management Implant, and returns true if lacking the aug, to avoid unfocused work penalties.
  * RAM cost: 80/20/5 GB
+ * Functions used: 
+ * ns.singularity.getOwnedAugmentations - 80/20/5 GB
  * @param ns BitBurner NS object
  * @returns returns true if the unfocused work penalty applies, false otherwise
  */
@@ -184,20 +216,37 @@ export function hasFocusPenalty(ns: NS): boolean {
 
 /**
  * Checks if a given faction still has unowned augments to buy. 
- * RAM cost: 243/63/18 GB
+ * Notably, if a gang exists, non-gang factions passed to this will exclude augments the gang offers.
+ * This can result in the function returning false far more often once a gang is joined. 
+ * RAM cost: 163/43/13 GB
+ * Functions used: 
+ * ns.singularity.getAugmentationsFromFaction - 80/20/5 GB
+ * ns.singularity.getOwnedAugmentations - 80/20/5 GB
+ * ns.gang.inGang - 1 GB
+ * ns.gang.getGangInformation - 2 GB
  * @param ns BitBurner NS object
  * @param faction string of a faction name to check for augments
- * @returns true if faction still has desired to get, false otherwise
+ * @returns true if faction still has augments left to get, false otherwise
  */
 export function factionHasAugs(ns: NS, faction: string): boolean {
 	let factionaugs = ns.singularity.getAugmentationsFromFaction(faction);
 	factionaugs = factionaugs.filter(aug => !ns.singularity.getOwnedAugmentations(true).includes(aug));
 	if (ns.gang.inGang() && ns.gang.getGangInformation().faction != faction) {
-		factionaugs = factionaugs.filter(aug => ns.singularity.getAugmentationsFromFaction(ns.gang.getGangInformation().faction).includes(aug));
+		factionaugs = factionaugs.filter(aug => !ns.singularity.getAugmentationsFromFaction(ns.gang.getGangInformation().faction).includes(aug));
 	}
 	return (factionaugs.length > 0);
 }
 
+/**
+ * Returns the player's current company job, if they have one. 
+ * Note that this assumes a single job currently held at a company, and will grab the first one it finds if multiple exist.
+ * Use quitEveryJob to enforce this if needed. Doesn't interact with jobs held elsewhere.
+ * RAM cost: 0.5 GB
+ * Functions used: 
+ * ns.getPlayer - 0.5 GB
+ * @param ns BitBurner NS object
+ * @returns current job as CompanyName if one exists, undefined otherwise
+ */
 export function getCompanyJob(ns: NS): CompanyName | undefined {
 	const companyFactions = ["Bachman & Associates",
 		"ECorp",
@@ -211,6 +260,15 @@ export function getCompanyJob(ns: NS): CompanyName | undefined {
 	return companyFactions.find(fac => ns.getPlayer().jobs[fac] != undefined);
 }
 
+/**
+ * Quits every company job the player currently holds. Useful for encorcing a single job. 
+ * Doesn't interact with non-company jobs.
+ * RAM cost: 48.5/12.5/3.5 GB
+ * Functions used: 
+ * ns.getPlayer - 0.5 GB
+ * ns.singularity.quitJob - 48/12/3 GB
+ * @param ns BitBurner NS object
+ */
 export function quitEveryJob(ns: NS): void {
 	let playerjob = getCompanyJob(ns);
 	while (playerjob != undefined) {
@@ -219,6 +277,17 @@ export function quitEveryJob(ns: NS): void {
 	}
 }
 
+/**
+ * Attempts to work for the player's company job 10 seconds, applying for an IT promotion each time.
+ * RAM cost: 112.5/28.5/7.5 GB
+ * Functions used: 
+ * ns.getPlayer - 0.5 GB
+ * ns.singularity.applyToCompany - 48/12/3 GB
+ * ns.singularity.workForCompany - 48/12/3 GB
+ * ns.singularity.stopAction - 16/4/1 GB
+ * @param ns BitBurner NS object
+ * @param focus boolean for if the work should be focused on
+ */
 export async function wageSlavery(ns: NS, focus: boolean): Promise<void> {
 	let job = getCompanyJob(ns);
 	if (job != undefined) {
@@ -232,7 +301,14 @@ export async function wageSlavery(ns: NS, focus: boolean): Promise<void> {
 /**
  * A function to run while waiting for money to afford something, commits homicide if the chance is at least 50%, mugs otherwise.
  * If a faction company job is detected it will work there instead.
- * RAM cost: 64/16/4 GB
+ * RAM cost: 272.5/68.5/17.5 GB
+ * Functions used: 
+ * ns.getPlayer - 0.5 GB
+ * ns.singularity.applyToCompany - 48/12/3 GB
+ * ns.singularity.workForCompany - 48/12/3 GB
+ * ns.singularity.stopAction - 16/4/1 GB
+ * ns.singularity.getCrimeChance - 80/20/5 GB
+ * ns.singularity.commitCrime - 80/20/5 GB
  * @param ns BitBurner NS object
  * @param focus boolean for if the work should be focused on
  */
@@ -243,11 +319,44 @@ export async function moneyTimeKill(ns: NS, focus: boolean): Promise<void> {
 	ns.singularity.stopAction();
 }
 
+/**
+ * Attempts to travel to a given city. 
+ * Used over travelToCity as it won't attempt to travel to your current city, accepts a string, and will earn money if it cannot afford the flight.
+ * RAM cost: 304.5/76.5/19.5 GB
+ * Functions used: 
+ * ns.getPlayer - 0.5 GB
+ * ns.singularity.applyToCompany - 48/12/3 GB
+ * ns.singularity.workForCompany - 48/12/3 GB
+ * ns.singularity.stopAction - 16/4/1 GB
+ * ns.singularity.getCrimeChance - 80/20/5 GB
+ * ns.singularity.commitCrime - 80/20/5 GB
+ * ns.singularity.travelToCity - 32/8/2 GB
+ * @param ns BitBurner NS object
+ * @param target string of the name of the city to attempt to be in
+ * @param focus boolean for if the work should be focused on
+ */
 export async function cityTravel(ns: NS, target: string, focus: boolean): Promise<void> {
 	let citytarg = target as CityName;
 	if (citytarg != ns.getPlayer().city) { while (!ns.singularity.travelToCity(citytarg)) { await moneyTimeKill(ns, focus); } }
 }
 
+/**
+ * Travels the player to Sector-12 to work out at Powerhouse Gym until all stats are at least the given number. 
+ * Will always train the lowest stat first, alternating between them to keep them somewhat balanced.
+ * RAM cost: 336.5/84.5/21.5 GB
+ * Functions used: 
+ * ns.getPlayer - 0.5 GB
+ * ns.singularity.applyToCompany - 48/12/3 GB
+ * ns.singularity.workForCompany - 48/12/3 GB
+ * ns.singularity.stopAction - 16/4/1 GB
+ * ns.singularity.getCrimeChance - 80/20/5 GB
+ * ns.singularity.commitCrime - 80/20/5 GB
+ * ns.singularity.travelToCity - 32/8/2 GB
+ * ns.singularity.gymWorkout - 32/8/2 GB
+ * @param ns BitBurner NS object
+ * @param target number of the goal combat stats to reach
+ * @param focus boolean for if the work should be focused on
+ */
 export async function trainPlayerCombat(ns: NS, target: number, focus: boolean): Promise<void> {
 	let combatstats = lowestCombatStat(ns, ns.getPlayer());
 	await cityTravel(ns, "Sector-12", focus);
@@ -259,6 +368,23 @@ export async function trainPlayerCombat(ns: NS, target: number, focus: boolean):
 	ns.singularity.stopAction();
 }
 
+/**
+ * Travels to Volhaven to take Algorithms courses at ZB Institute of Technology until hacking level reaches the given number.
+ * RAM cost: 336.55/84.55/21.55 GB
+ * Functions used: 
+ * ns.getPlayer - 0.5 GB
+ * ns.singularity.applyToCompany - 48/12/3 GB
+ * ns.singularity.workForCompany - 48/12/3 GB
+ * ns.singularity.stopAction - 16/4/1 GB
+ * ns.singularity.getCrimeChance - 80/20/5 GB
+ * ns.singularity.commitCrime - 80/20/5 GB
+ * ns.singularity.travelToCity - 32/8/2 GB
+ * ns.singularity.universityCourse - 32/8/2 GB
+ * ns.getHackingLevel - 0.05 GB
+ * @param ns BitBurner NS object
+ * @param target number of the goal hacking level to reach
+ * @param focus boolean for if the work should be focused on
+ */
 export async function trainHacking(ns: NS, target: number, focus: boolean): Promise<void> {
 	await cityTravel(ns, "Volhaven", focus);
 	ns.singularity.universityCourse("ZB Institute of Technology", "Algorithms", focus);
@@ -266,16 +392,20 @@ export async function trainHacking(ns: NS, target: number, focus: boolean): Prom
 	ns.singularity.stopAction();
 }
 
+/*
 export async function trainCharisma(ns: NS, target: number, focus: boolean): Promise<void> {
 	await cityTravel(ns, "Volhaven", focus);
 	ns.singularity.universityCourse("ZB Institute of Technology", "Leadership", focus);
 	while (ns.getPlayer().skills.charisma < target) { await ns.sleep(1000); }
 	ns.singularity.stopAction();
 }
+*/
 
 /**
  * Finds the index of a hacknet object whose name is passed as a string. Useful, as many hacknet functions only accept indexes.
  * RAM cost: 4 GB
+ * Functions used: 
+ * ns.hacknet - 4 GB
  * @param ns BitBurner NS object
  * @param name string of the name of a hacknet node/server
  * @returns the index of the hacknet node/server
@@ -286,6 +416,22 @@ export function getHacknetIndex(ns: NS, name: string): number {
 	return hacknets.indexOf(name);
 }
 
+/**
+ * Creates a worklist, an array of specified length, containing strings of the augments with the lowest rep requirements across all joined factions.
+ * The returned array won't contain augments with unment prereqs, and will be sorted in price high -> low.
+ * RAM cost: 400.5/100.5/25.5 GB
+ * Functions used: 
+ * ns.getPlayer - 0.5 GB
+ * ns.singularity.getOwnedAugmentations - 80/20/5 GB
+ * ns.singularity.getAugmentationsFromFaction - 80/20/5 GB
+ * ns.singularity.getAugmentationRepReq - 40/10/2.5 GB
+ * ns.singularity.getAugmentationPrereq - 80/20/5 GB
+ * ns.singularity.getAugmentationFactions - 80/20/5 GB
+ * ns.singularity.getAugmentationPrice - 40/10/2.5 GB
+ * @param ns BitBurner NS object
+ * @param length number of the length of the worklist
+ * @returns array of strings of augments of the given length, sorted as described
+ */
 export function createWorklist(ns: NS, length: number): string[] {
 	const playeraugs = ns.singularity.getOwnedAugmentations(true);
 	let auglist = [] as string[];
@@ -300,6 +446,11 @@ export function createWorklist(ns: NS, length: number): string[] {
 	return auglist;
 }
 
+/**
+ * Array of all factions, sorted in rough ascending requirement order, that have some hacking skill requirement to be joined. 
+ * All but one of these also have a server that requires having a backdoor installed before being invited, as well.
+ * These factions are notable for being sources of hacking augments.
+ */
 export const hackFactions = [
 	"Netburners",
 	"CyberSec",
@@ -309,6 +460,41 @@ export const hackFactions = [
 	"Fulcrum Secret Technologies"
 ];
 
+/**
+ * Attempts to join the first faction down the hackFactions list that still has augments left unpurchased. 
+ * This will backdoor required servers as needed. 
+ * RAM cost: 662.2/170.2/47.2 GB
+ * Functions used: 
+ * ns.singularity.getAugmentationsFromFaction - 80/20/5 GB
+ * ns.singularity.getOwnedAugmentations - 80/20/5 GB
+ * ns.gang.inGang - 1 GB
+ * ns.gang.getGangInformation - 2 GB
+ * ns.getServerRequiredHackingLevel - 0.1 GB
+ * ns.getServer - 2 GB
+ * ns.brutessh - 0.05 GB
+ * ns.ftpcrack - 0.05 GB
+ * ns.relaysmtp - 0.05 GB
+ * ns.httpworm - 0.05 GB
+ * ns.sqlinject - 0.05 GB
+ * ns.nuke - 0.05 GB
+ * ns.hasRootAccess - 0.05 GB
+ * ns.getPlayer - 0.5 GB
+ * ns.singularity.applyToCompany - 48/12/3 GB
+ * ns.singularity.workForCompany - 48/12/3 GB
+ * ns.singularity.stopAction - 16/4/1 GB
+ * ns.singularity.getCrimeChance - 80/20/5 GB
+ * ns.singularity.commitCrime - 80/20/5 GB
+ * ns.singularity.travelToCity - 32/8/2 GB
+ * ns.singularity.universityCourse - 32/8/2 GB
+ * ns.getHackingLevel - 0.05 GB
+ * ns.scan - 0.2 GB
+ * ns.singularity.connect - 32/8/2 GB
+ * ns.singularity.installBackdoor - 32/8/2 GB
+ * ns.singularity.checkFactionInvitations - 48/12/3 GB
+ * ns.singularity.joinFaction - 48/12/3 GB
+ * @param ns BitBurner NS object
+ * @param focus boolean for if the work should be focused on
+ */
 export async function joinFirstHackers(ns: NS, focus: boolean): Promise<void> {
 	const hackFactionsMask = [
 		undefined,
@@ -342,6 +528,11 @@ export async function joinFirstHackers(ns: NS, focus: boolean): Promise<void> {
 	}
 }
 
+/**
+ * Array of all city factions, essentially government positions. 
+ * All of these are incompatible with a number of the others, forming a trio of groups. 
+ * Many of their augments are useful and relatively low level, however.
+ */
 export const cityFactions = [
 	"Sector-12",
 	"Aevum",
@@ -351,6 +542,26 @@ export const cityFactions = [
 	"Volhaven"
 ];
 
+/**
+ * Finds the first city faction that still has augments left to get and attempts to join it, as well as every allied city faction, if any.
+ * RAM cost: 563.5/143.5/38.5 GB
+ * Functions used: 
+ * ns.singularity.getAugmentationsFromFaction - 80/20/5 GB
+ * ns.singularity.getOwnedAugmentations - 80/20/5 GB
+ * ns.gang.inGang - 1 GB
+ * ns.gang.getGangInformation - 2 GB
+ * ns.getPlayer - 0.5 GB
+ * ns.singularity.applyToCompany - 48/12/3 GB
+ * ns.singularity.workForCompany - 48/12/3 GB
+ * ns.singularity.stopAction - 16/4/1 GB
+ * ns.singularity.getCrimeChance - 80/20/5 GB
+ * ns.singularity.commitCrime - 80/20/5 GB
+ * ns.singularity.travelToCity - 32/8/2 GB
+ * ns.singularity.checkFactionInvitations - 48/12/3 GB
+ * ns.singularity.joinFaction - 48/12/3 GB
+ * @param ns BitBurner NS object
+ * @param focus boolean for if the work should be focused on
+ */
 export async function joinCityFactions(ns: NS, focus: boolean): Promise<void> {
 	const cityFactionsMask = [["Sector-12", "Aevum"], ["Chongqing", "New Tokyo", "Ishima"], ["Volhaven"]];
 	if (cityFactionsMask[0].some(fac => factionHasAugs(ns, fac))) {
