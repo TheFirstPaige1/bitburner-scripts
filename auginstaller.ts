@@ -25,6 +25,6 @@ export async function main(ns: NS): Promise<void> {
 	if (ns.singularity.getOwnedAugmentations().includes("The Red Pill") && (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel("w0r1d_d43m0n"))) {
 		ns.tprint("GO BACKDOOR w0r1d_d43m0n");
 	} else {
-		ns.singularity.installAugmentations("setup.js");
+		ns.singularity.installAugmentations(/*"setup.js"*/);
 	}
 }

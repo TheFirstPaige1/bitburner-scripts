@@ -32,7 +32,7 @@ export async function main(ns: NS): Promise<void> {
 	ns.singularity.stopAction();
 	let npid = ns.run("nettrawler.js");
 	while (ns.isRunning(npid)) { await moneyTimeKill(ns, focus); }
-	ns.run("workmanager.js");
+	//ns.run("workmanager.js");
 	ns.run("serverstager.js", 1, Math.trunc(ns.getServerMaxRam("home") / 2));
 	ns.run("stockwatcher.js");
 }

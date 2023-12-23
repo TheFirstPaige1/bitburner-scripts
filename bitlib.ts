@@ -37,6 +37,21 @@ export const desiredfactions = [
 	"The Covenant"
 ];
 
+export const gangNames = [
+	"Jerry",
+	"George",
+	"Elaine",
+	"Kramer",
+	"Konata",
+	"Kagami",
+	"Miyuki",
+	"Tsukasa",
+	"Finn",
+	"Jake",
+	"Bonnibel",
+	"Marcilene"
+];
+
 export function quietTheBabblingThrong(ns: NS): void {
 	ns.disableLog('disableLog');
 	ns.disableLog('sleep');
@@ -46,6 +61,7 @@ export function quietTheBabblingThrong(ns: NS): void {
 	ns.disableLog('singularity.gymWorkout');
 	ns.disableLog('singularity.applyToCompany');
 	ns.disableLog('singularity.workForCompany');
+	ns.disableLog('singularity.purchaseAugmentation');
 }
 
 /**
@@ -397,7 +413,7 @@ export async function joinFirstCompany(ns: NS, focus: boolean): Promise<void> {
 	let target = companyFactions.find(fac => (factionHasAugs(ns, fac) && !ns.getPlayer().factions.includes(fac)));
 	if (target != undefined) {
 		let targetjob = companyFactionsMask[companyFactions.indexOf(target)];
-		await trainHacking(ns, ns.singularity.getCompanyPositionInfo(targetjob, "IT Intern").requiredSkills.hacking, focus);
+		//await trainHacking(ns, ns.singularity.getCompanyPositionInfo(targetjob, "IT Intern").requiredSkills.hacking, focus);
 		ns.singularity.applyToCompany(targetjob, "IT");
 		ns.singularity.stopAction();
 	}

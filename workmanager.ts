@@ -68,5 +68,5 @@ export async function main(ns: NS): Promise<void> {
 		ns.print("buying " + targaug + " from " + targfac + "...");
 		while (!sing.purchaseAugmentation(targfac, targaug)) { await moneyTimeKill(ns, focus); }
 	}
-	ns.run("auginstaller.js");
+	//ns.run("auginstaller.js");
 }
