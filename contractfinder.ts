@@ -1,11 +1,11 @@
 import { NS } from "@ns";
 import { masterLister } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
-	let firstcontract = masterLister(ns).find(serv => ns.ls(serv, ".cct").length > 0);
-	if (firstcontract != undefined) {
-		let contract = ns.ls(firstcontract, ".cct")[0];
-		ns.tprint(ns.codingcontract.getContractType(contract, firstcontract));
-		ns.tprint(ns.codingcontract.getDescription(contract, firstcontract));
-		ns.tprint(ns.codingcontract.getData(contract, firstcontract));
+	let contractservers = masterLister(ns).filter(serv => ns.ls(serv, ".cct").length > 0);
+	for (const server of contractservers) {
+		let contractlist = ns.ls(server, ".cct");
+		for (const contract of contractlist) {
+			ns.tprint(server + " " + contract + " " + ns.codingcontract.getContractType(contract, server));
+		}
 	}
 }

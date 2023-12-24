@@ -1,5 +1,6 @@
 # bitburner-scripts
 Scripts for BitBurner 2.5.1
+Little to no effort is made to keep this readme up to date.
 
 Current scripts and their functions:
 - bitlib - library script containing functions used in other scripts

@@ -1,6 +1,16 @@
 import { NS } from "@ns";
+import { thereCanBeOnlyOne } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
+	thereCanBeOnlyOne(ns);
+	if (ns.stock.hasWSEAccount() && ns.stock.hasTIXAPIAccess()) {
+		const stocknames = ns.stock.getSymbols();
+		for (const stocksym of stocknames) {
+			while (ns.getServerMoneyAvailable("home") < 200000) { await ns.sleep(10000); }
+			ns.stock.sellStock(stocksym, ns.stock.getPosition(stocksym)[0]);
+			try { ns.stock.sellShort(stocksym, ns.stock.getPosition(stocksym)[2]); } catch { }
+		}
+	}
 	//ns.tail();
 	while (!ns.stock.purchaseWseAccount()) { await ns.sleep(60000); }
 	while (!ns.stock.purchaseTixApi()) { await ns.sleep(60000); }

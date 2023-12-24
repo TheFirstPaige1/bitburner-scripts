@@ -1,4 +1,6 @@
-import { CityName, CompanyName, NS, Player, SleevePerson } from "@ns";
+import ReactLib from 'react';
+declare const React: typeof ReactLib;
+import { CityName, CompanyName, NS, Player, ReactElement, SleevePerson } from "@ns";
 
 /**
  * A hardcoded list of most of the normal factions in the game, ordered in a rough descending list of work priority. 
@@ -715,4 +717,36 @@ export async function joinFirstSecret(ns: NS, focus: boolean): Promise<void> {
 			}
 		}
 	}
+}
+
+export function howTheTurnsTable(ns: NS, headerKey: any, tableData: any[]): ReactElement {
+	let headerReact = [];
+	let headers = Object.keys(headerKey);
+	for (const header of headers) { headerReact.push(React.createElement('th', { style: { "padding": "5px", "textDecoration": "underline" } }, header)); }
+	let reactTable = [React.createElement('tr', {}, headerReact)];
+	for (const row of tableData) {
+		let rowdata = [];
+		for (let i = 0; i < headers.length; i++) {
+			let celldata = row[headers[i]];
+			let format = Object.values(headerKey)[i];
+			if (format == 'number') {
+				rowdata.push(React.createElement('td', { style: { "padding": "5px", "textAlign": "right" } }, ns.formatNumber(celldata)));
+			} else if (format == 'integer') {
+				rowdata.push(React.createElement('td', { style: { "padding": "5px", "textAlign": "right" } }, ns.formatNumber(celldata, undefined, undefined, true)));
+			} else if (format == 'duration') {
+				rowdata.push(React.createElement('td', { style: { "padding": "5px", "textAlign": "right" } }, ns.tFormat(celldata, false).replace(/ minutes?/,
+					'm').replace(/ seconds?/, 's').replaceAll(', ', '') + " " + Math.floor(celldata % 1000).toString().padStart(3, '0') + 'ms'));
+			} else if (i == 0) {
+				rowdata.push(React.createElement('td', { style: { "padding": "5px", "textAlign": "right" } }, celldata));
+			} else {
+				rowdata.push(React.createElement('td', { style: { "padding": "5px", "textAlign": "center" } }, celldata));
+			}
+		}
+		reactTable.push(React.createElement('tr', {}, rowdata));
+	}
+	return React.createElement('tbody', {}, reactTable);
+}
+
+export function thereCanBeOnlyOne(ns: NS): void {
+	for (const process of ns.ps()) { if (process.pid != ns.pid && process.filename == ns.getScriptName()) { ns.kill(process.pid); } }
 }

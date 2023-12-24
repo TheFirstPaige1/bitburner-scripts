@@ -2,7 +2,7 @@ import { NS } from "@ns";
 import {
 	hasFocusPenalty, quietTheBabblingThrong, moneyTimeKill, quitEveryJob, createWorklist, desiredfactions, getCompanyJob, factionHasAugs,
 	crimeFactions, joinFirstCrime, hackFactions, joinFirstHackers, companyFactions, joinFirstCompany, cityFactions, joinCityFactions, secretFactions,
-	joinFirstSecret, graduateCompany
+	joinFirstSecret, graduateCompany, masterLister
 } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.killall("home", true);
@@ -10,7 +10,7 @@ export async function main(ns: NS): Promise<void> {
 	if (focus) { ns.tail(); }
 	const sing = ns.singularity;
 	quietTheBabblingThrong(ns);
-	//for (const serv of masterLister(ns)) { ns.scp(ns.ls(serv, ".lit"), "home", serv); }
+	for (const serv of masterLister(ns)) { ns.scp(ns.ls(serv, ".lit"), "home", serv); }
 	for (const fac of sing.checkFactionInvitations()) { sing.joinFaction(fac); }
 	ns.run("totalhack.js");
 	sing.universityCourse("Rothman University", "Computer Science", focus);
@@ -114,7 +114,6 @@ export async function main(ns: NS): Promise<void> {
 	while (sing.purchaseAugmentation(factions[0], "NeuroFlux Governor")) { await ns.sleep(10); }
 	if (ns.getResetInfo().currentNode == 2 && ns.gang.inGang()) { sing.purchaseAugmentation(ns.gang.getGangInformation().faction, "The Red Pill"); }
 	else { sing.purchaseAugmentation("Daedalus", "The Red Pill"); }
-	//if (sing.exportGameBonus()) { sing.exportGame(); }
 	if (sing.getOwnedAugmentations().includes("The Red Pill") && (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel("w0r1d_d43m0n"))) {
 		ns.tprint("GO BACKDOOR w0r1d_d43m0n");
 	} else {
