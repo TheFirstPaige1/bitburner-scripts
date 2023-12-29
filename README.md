@@ -1,5 +1,5 @@
 # bitburner-scripts
-Scripts for BitBurner 2.5.1
+Scripts for BitBurner 2.5.2
 Little to no effort is made to keep this readme up to date.
 
 Current scripts and their functions:

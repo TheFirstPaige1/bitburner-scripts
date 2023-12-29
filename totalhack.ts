@@ -1,5 +1,5 @@
 import { NS } from "@ns";
-import { howTheTurnsTable, masterLister, thereCanBeOnlyOne } from "./bitlib";
+import { getDynamicRAM, howTheTurnsTable, masterLister, thereCanBeOnlyOne } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
 	thereCanBeOnlyOne(ns);
@@ -14,7 +14,9 @@ export async function main(ns: NS): Promise<void> {
 		hacklist.push({
 			name: target,
 			money: ns.getServerMoneyAvailable(target),
+			mPercent: (ns.getServerMoneyAvailable(target) / ns.getServerMaxMoney(target)),
 			security: ns.getServerSecurityLevel(target),
+			sPercent: Math.min(1, (ns.getServerSecurityLevel(target) / 100)),
 			ramServ: "",
 			hackOp: "",
 			threads: 0,
@@ -23,69 +25,51 @@ export async function main(ns: NS): Promise<void> {
 		});
 	}
 	while (true) {
-		for (let i = 0; i < hacklist.length; i++) {
-			let target = hacklist[i].name;
-			if (!ns.isRunning(hacklist[i].pid)) {
-				hacklist[i].money = ns.getServerMoneyAvailable(target);
-				hacklist[i].security = ns.getServerSecurityLevel(target);
-				let ramserver = ramlist[0];
-				let freeram = Math.max(0, ns.getServerMaxRam(ramserver) - ns.getServerUsedRam(ramserver) - Math.max(Math.trunc(ns.getServerMaxRam(ramserver) / 4), 128));
-				let mostfreeram = freeram;
-				for (let m = 1; m < ramlist.length; m++) {
-					freeram = ns.getServerMaxRam(ramlist[m]) - ns.getServerUsedRam(ramlist[m]);
-					if (ramlist[m].includes("hacknet")) { freeram = Math.trunc(ns.getServerMaxRam(ramlist[m]) / 2) - ns.getServerUsedRam(ramlist[m]); }
-					if (freeram > mostfreeram) {
-						mostfreeram = freeram;
-						ramserver = ramlist[m];
-					}
-				}
-				let maxthreads = Math.trunc(mostfreeram / 2);
+		for (const target of hacklist) {
+			if (!ns.isRunning(target.pid)) {
+				target.money = ns.getServerMoneyAvailable(target.name);
+				target.mPercent = ns.getServerMoneyAvailable(target.name) / ns.getServerMaxMoney(target.name);
+				target.security = ns.getServerSecurityLevel(target.name);
+				target.sPercent = Math.min(1, (ns.getServerSecurityLevel(target.name) / 100));
+				target.ramServ = "";
+				target.hackOp = "";
+				target.threads = 0;
+				let mostfreeram = getDynamicRAM(ns, ramlist);
+				let maxthreads = Math.trunc(mostfreeram.freeRam / 2);
 				if (maxthreads > 0) {
-					hacklist[i].ramServ = ramserver;
-					if (ns.getServerSecurityLevel(target) > (ns.getServerMinSecurityLevel(target) + 5)) {
-						hacklist[i].hackOp = "weaken";
-						let weakengoal = ns.getServerSecurityLevel(target) - ns.getServerMinSecurityLevel(target);
+					target.ramServ = mostfreeram.name;
+					if (target.security > (ns.getServerMinSecurityLevel(target.name) + 5)) {
+						target.hackOp = "weaken";
+						let weakengoal = target.security - ns.getServerMinSecurityLevel(target.name);
 						let threadcount = 1;
-						while (ns.weakenAnalyze(threadcount, ns.getServer(ramserver).cpuCores) < weakengoal) { threadcount++; }
+						while (ns.weakenAnalyze(threadcount, ns.getServer(target.ramServ).cpuCores) < weakengoal) { threadcount++; }
 						threadcount = Math.min(threadcount, maxthreads);
-						hacklist[i].threads = threadcount;
-						if (formsexe) {
-							hacklist[i].timer = ns.formulas.hacking.weakenTime(ns.getServer(target), ns.getPlayer());
-							//ns.print("weakening " + target + " for " + Math.trunc(hacklist[i].timer) + "ms");
-							//ns.print("on " + ramserver + " with " + threadcount + " threads");
-						} else { /*ns.print("weakening " + target + " with " + threadcount + " threads on " + ramserver);*/ }
-						hacklist[i].pid = ns.exec("manhack.js", ramserver, threadcount, 0, target);
-					} else if (ns.getServerMoneyAvailable(target) < (ns.getServerMaxMoney(target) * 0.75)) {
-						hacklist[i].hackOp = "grow";
+						target.threads = threadcount;
+						if (formsexe) { target.timer = ns.formulas.hacking.weakenTime(ns.getServer(target.name), ns.getPlayer()); }
+						target.pid = ns.exec("manhack.js", target.ramServ, threadcount, 0, target.name);
+					} else if (target.money < (ns.getServerMaxMoney(target.name) * 0.75)) {
+						target.hackOp = "grow";
 						let threadcount = 1;
-						if (ns.getServerMoneyAvailable(target) < 10) { threadcount = maxthreads; }
+						if (target.money < 10) { threadcount = maxthreads; }
 						else {
-							if (formsexe) { threadcount = ns.formulas.hacking.growThreads(ns.getServer(target), ns.getPlayer(), Infinity, ns.getServer(ramserver).cpuCores); }
+							if (formsexe) {
+								threadcount = ns.formulas.hacking.growThreads(ns.getServer(target.name), ns.getPlayer(), Infinity, ns.getServer(target.ramServ).cpuCores);
+							}
 							else {
-								let growthgoal = ns.getServerMaxMoney(target) / ns.getServerMoneyAvailable(target);
-								threadcount = Math.ceil(ns.growthAnalyze(target, growthgoal, ns.getServer(ramserver).cpuCores));
+								threadcount = Math.ceil(ns.growthAnalyze(target.name, ns.getServerMaxMoney(target.name) / target.money, ns.getServer(target.ramServ).cpuCores));
 							}
 							threadcount = Math.min(maxthreads, threadcount);
 						}
-						hacklist[i].threads = threadcount;
-						if (formsexe) {
-							hacklist[i].timer = ns.formulas.hacking.growTime(ns.getServer(target), ns.getPlayer());
-							//ns.print("growing " + target + " for " + Math.trunc(hacklist[i].timer) + "ms");
-							//ns.print("on " + ramserver + " with " + threadcount + " threads");
-						} else { /*ns.print("growing " + target + " with " + threadcount + " threads on " + ramserver);*/ }
-						hacklist[i].pid = ns.exec("manhack.js", ramserver, threadcount, 1, target);
+						target.threads = threadcount;
+						if (formsexe) { target.timer = ns.formulas.hacking.growTime(ns.getServer(target.name), ns.getPlayer()); }
+						target.pid = ns.exec("manhack.js", target.ramServ, threadcount, 1, target.name);
 					} else {
-						hacklist[i].hackOp = "hack";
-						let hackgoal = ns.getServerMoneyAvailable(target) * 0.9;
-						let threadcount = Math.trunc(ns.hackAnalyzeThreads(target, hackgoal));
+						target.hackOp = "hack";
+						let threadcount = Math.trunc(ns.hackAnalyzeThreads(target.name, target.money * 0.9));
 						threadcount = Math.min(threadcount, maxthreads);
-						hacklist[i].threads = threadcount;
-						if (formsexe) {
-							hacklist[i].timer = ns.formulas.hacking.hackTime(ns.getServer(target), ns.getPlayer());
-							//ns.print("hacking " + target + " for " + Math.trunc(hacklist[i].timer) + "ms");
-							//ns.print("on " + ramserver + " with " + threadcount + " threads");
-						} else { /*ns.print("hacking " + target + " with " + threadcount + " threads on " + ramserver);*/ }
-						hacklist[i].pid = ns.exec("manhack.js", ramserver, threadcount, 2, target);
+						target.threads = threadcount;
+						if (formsexe) { target.timer = ns.formulas.hacking.hackTime(ns.getServer(target.name), ns.getPlayer()); }
+						target.pid = ns.exec("manhack.js", target.ramServ, threadcount, 2, target.name);
 					}
 				}
 			}
@@ -94,27 +78,19 @@ export async function main(ns: NS): Promise<void> {
 		ns.printRaw(howTheTurnsTable(ns, {
 			name: "string",
 			money: "number",
+			mPercent: "progress,20",
 			security: "integer",
+			sPercent: "progress,20",
 			ramServ: "string",
 			hackOp: "string",
 			threads: "string",
-			pid: "string",
 			timer: "duration"
 		}, hacklist));
 		if (formsexe) {
-			let lowestms = Infinity;
-			for (const hackservs of hacklist) { if (hackservs.timer < lowestms) { lowestms = hackservs.timer; } }
-			for (let i = 0; i < hacklist.length; i++) { hacklist[i].timer = hacklist[i].timer - lowestms; }
-			await ns.sleep(lowestms + 1);
-		} else {
-			let looping = true;
-			while (looping) {
-				let pidcount = 0;
-				for (const hackservs of hacklist) { if (ns.isRunning(hackservs.pid)) { pidcount++; } }
-				if (pidcount == hacklist.length) { await ns.sleep(5000); }
-				else { looping = false; }
-			}
-		}
+			let lowestms = Math.min(...hacklist.map(serv => serv.timer));
+			hacklist.forEach(target => { target.timer -= lowestms; });
+			await ns.sleep(lowestms);
+		} else { while (hacklist.every(server => { ns.isRunning(server.pid); })) { await ns.sleep(500); } }
 		let checklist = masterLister(ns);
 		if (checklist.length > masterlist.length) { for (const server of checklist) { if (!masterlist.includes(server)) { masterlist.push(server); } } }
 		for (const target of masterlist) {
@@ -127,7 +103,9 @@ export async function main(ns: NS): Promise<void> {
 				hacklist.push({
 					name: target,
 					money: ns.getServerMoneyAvailable(target),
+					mPercent: (ns.getServerMoneyAvailable(target) / ns.getServerMaxMoney(target)),
 					security: ns.getServerSecurityLevel(target),
+					sPercent: Math.min(1, (ns.getServerSecurityLevel(target) / 100)),
 					ramServ: "",
 					hackOp: "",
 					threads: 0,

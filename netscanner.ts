@@ -20,6 +20,4 @@ export async function main(ns: NS): Promise<void> {
 		}
 		scanservers = scanservers.slice(1);
 	}
-	ns.rm("networkmap.txt");
-	ns.write("networkmap.txt", JSON.stringify(servermap));
 }

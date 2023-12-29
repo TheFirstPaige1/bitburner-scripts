@@ -1,6 +1,8 @@
 import { NS } from "@ns";
-import { quietTheBabblingThrong, hasFocusPenalty } from "./bitlib";
+import { quietTheBabblingThrong, hasFocusPenalty, thereCanBeOnlyOne } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
+	thereCanBeOnlyOne(ns);
+	ns.run("babysitter.js");
 	const h4ck = ns.hacknet;
 	quietTheBabblingThrong(ns);
 	if (hasFocusPenalty(ns)) { ns.tail(); }

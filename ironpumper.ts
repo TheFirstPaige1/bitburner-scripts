@@ -5,11 +5,11 @@ export async function main(ns: NS): Promise<void> {
 	const target = ns.args[0] as number;
 	const focus = hasFocusPenalty(ns);
 	while (!ns.singularity.travelToCity("Sector-12")) { await ns.sleep(60000); }
-	let loweststat = lowestCombatStat(ns, ns.getPlayer());
-	while (loweststat[1] < target) {
-		ns.singularity.gymWorkout("Powerhouse Gym", loweststat[0], focus);
+	let loweststat = lowestCombatStat(ns.getPlayer());
+	while (loweststat.value < target) {
+		ns.singularity.gymWorkout("Powerhouse Gym", loweststat.name, focus);
 		await ns.sleep(1000);
-		loweststat = lowestCombatStat(ns, ns.getPlayer());
+		loweststat = lowestCombatStat(ns.getPlayer());
 	}
 	ns.singularity.stopAction();
 }
