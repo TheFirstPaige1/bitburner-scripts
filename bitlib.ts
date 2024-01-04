@@ -1,6 +1,102 @@
 import ReactLib from 'react';
 declare const React: typeof ReactLib;
-import { CityName, CompanyName, JobName, NS, Player, PlayerRequirement, ReactElement, Skills, SleevePerson } from "@ns";
+import {
+	Bladeburner, CityName, CodingContract, CompanyName, Corporation, CrimeType, Gang, Grafting, JobName, NS, Player, PlayerRequirement, ReactElement,
+	Singularity, SkillRequirement, Skills, Sleeve, SleevePerson, Stanek, TIX
+} from "@ns";
+
+
+// every possible function type is a subtype of this
+type AnyFn = (...args: any) => any;
+
+// if F is the type of some function, Asynced<F> is a function that is exactly the same except it returns a Promise<whatever F returns>
+type Asynced<F extends AnyFn> = (...args: Parameters<F>) => Promise<Awaited<ReturnType<F>>>;
+
+type DispatchMethods<Namespace> = {
+	[Method in string & keyof Namespace as `${Method}D`]: Namespace[Method] extends AnyFn ? Asynced<Namespace[Method]> : never;
+};
+
+type Proxied<T> = T & DispatchMethods<T>;
+
+// additional things for NS specifically: all of the sub-namespaces can be proxied too
+export interface ProxyNS extends Proxied<NS> {
+	readonly bladeburner: Proxied<Bladeburner>;
+	readonly codingcontract: Proxied<CodingContract>;
+	readonly corporation: Proxied<Corporation>;
+	readonly gang: Proxied<Gang>;
+	readonly grafting: Proxied<Grafting>;
+	readonly singularity: Proxied<Singularity>;
+	readonly sleeve: Proxied<Sleeve>;
+	readonly stock: Proxied<TIX>;
+	readonly stanek: Proxied<Stanek>;
+}
+
+async function callInSubprocess(ns: NS, fn: string, args: any[]): Promise<any> {
+	const id = 0;
+	const reply = ns.pid;
+	let ramhost = "home";
+	ns.exec(
+		'memalloc.js',
+		ramhost,
+		{ ramOverride: 1.6 + ns.getFunctionRamCost(fn), temporary: true },
+		reply, id, fn, ...args.map(arg => JSON.stringify(arg))
+	)
+	let data = ns.readPort(reply);
+	while (data == "NULL PORT DATA") {
+		await ns.asleep(1);
+		data = ns.readPort(reply);
+	}
+	return JSON.parse(data.toString()).result;
+}
+
+function makeSubproxy(ns: NS, somename: string | symbol, realvalue: any): any {
+	const wrappedNS = new Proxy(realvalue, {
+		get(subns, property) {
+			const realvalue = (subns as any)[property];
+			if (typeof realvalue === 'object' && !Array.isArray(realvalue)) {
+				return makeSubproxy(ns, property, realvalue);
+			} else if (realvalue !== undefined) {
+				return realvalue;
+			}
+			if (realvalue !== undefined) return realvalue;
+			if (typeof property !== 'string') return undefined;
+			if (!property.endsWith('D')) return undefined;
+			const realFunction = property.slice(0, -1);
+			if (typeof (subns as any)[realFunction] !== "function") return undefined;
+			const proxiedFunc = async (...args: any[]) => {
+				const result = callInSubprocess(ns, somename as string + "." + realFunction, args);
+				return result;
+			};
+			return proxiedFunc;
+		}
+	});
+	return wrappedNS as any;
+}
+
+export function wrapNS(ns: NS): ProxyNS {
+	const wrappedNS = new Proxy(ns, {
+		get(ns, property) {
+			const realvalue = (ns as any)[property];
+			if (typeof realvalue === 'object' && !Array.isArray(realvalue)) {
+				return makeSubproxy(ns, property, realvalue);
+			} else if (realvalue !== undefined) {
+				return realvalue;
+			}
+			if (realvalue !== undefined) return realvalue;
+			if (typeof property !== 'string') return undefined;
+			if (!property.endsWith('D')) return undefined;
+			const realFunction = property.slice(0, -1);
+			if (typeof (ns as any)[realFunction] !== "function") return undefined;
+			const proxiedFunc = async (...args: any[]) => {
+				const result = callInSubprocess(ns, realFunction, args);
+				return result;
+			};
+			return proxiedFunc;
+		}
+	});
+	return wrappedNS as any;
+}
+
 
 /**
  * A hardcoded list of most of the normal factions in the game, ordered in a rough descending list of work priority. 
@@ -71,8 +167,12 @@ export function quietTheBabblingThrong(ns: NS): void {
 	ns.disableLog('sqlinject');
 	ns.disableLog('nuke');
 	ns.disableLog('scan');
+	ns.disableLog('scp');
+	ns.disableLog('exec');
 	ns.disableLog('getServerMoneyAvailable');
 	ns.disableLog('getServerMaxMoney');
+	ns.disableLog('getServerUsedRam');
+	ns.disableLog('getServerMaxRam');
 	ns.disableLog('getHackingLevel');
 	ns.disableLog('getServerRequiredHackingLevel');
 	ns.disableLog('singularity.commitCrime');
@@ -218,8 +318,8 @@ export function getKarma(ns: NS): number {
  * @param ns BitBurner NS object
  * @returns returns true if the unfocused work penalty applies, false otherwise
  */
-export function hasFocusPenalty(ns: NS): boolean {
-	return !ns.singularity.getOwnedAugmentations().includes("Neuroreceptor Management Implant");
+export async function hasFocusPenalty(ns: NS): Promise<boolean> {
+	return !(await wrapNS(ns).singularity.getOwnedAugmentationsD()).includes("Neuroreceptor Management Implant");
 }
 
 /**
@@ -230,16 +330,22 @@ export function hasFocusPenalty(ns: NS): boolean {
  * @param faction string of a faction name to check for augments
  * @returns true if faction still has augments left to get, false otherwise
  */
-export function factionHasAugs(ns: NS, faction: string): boolean {
-	let factionaugs = ns.singularity.getAugmentationsFromFaction(faction);
-	factionaugs = factionaugs.filter(aug => !ns.singularity.getOwnedAugmentations(true).includes(aug));
+export async function factionHasAugs(ns: NS, faction: string): Promise<boolean> {
+	let factionaugs = await wrapNS(ns).singularity.getAugmentationsFromFactionD(faction);
+	factionaugs = factionaugs.filter(async aug => !(await wrapNS(ns).singularity.getOwnedAugmentationsD(true)).includes(aug));
 	if (ns.gang.inGang() && ns.gang.getGangInformation().faction != faction) {
-		factionaugs = factionaugs.filter(aug => !ns.singularity.getAugmentationsFromFaction(ns.gang.getGangInformation().faction).includes(aug));
+		factionaugs = factionaugs.filter(async aug => !(await wrapNS(ns).singularity.getAugmentationsFromFactionD(ns.gang.getGangInformation().faction)).includes(aug));
 	}
 	return (factionaugs.length > 0);
 }
 
 export function getPlayerJobs(ns: NS): [CompanyName, JobName][] { return Object.entries(ns.getPlayer().jobs) as [CompanyName, JobName][]; }
+
+export async function getCrimeProfit(ns: NS, crime: CrimeType, person: Player | SleevePerson): Promise<number> {
+	return (ns.formulas.work.crimeGains(person, crime).money /
+		(await wrapNS(ns).singularity.getCrimeStatsD(crime)).time) *
+		ns.formulas.work.crimeSuccessChance(person, crime);
+}
 
 /**
  * Attempts to work for the player's company job 10 seconds, applying for an IT promotion each time.
@@ -254,10 +360,17 @@ export async function wageSlavery(ns: NS, focus: boolean): Promise<void> {
 	ns.singularity.stopAction();
 }
 
+export function getStabbin(ns: NS, person: Player | SleevePerson): boolean { return ns.formulas.work.crimeSuccessChance(person, "Homicide") >= 0.5; }
+
 export async function goCrimin(ns: NS, focus: boolean): Promise<void> {
-	if (ns.singularity.getCrimeChance("Homicide") > 0.5) { await ns.sleep(ns.singularity.commitCrime("Homicide", focus)); }
-	else { await ns.sleep(ns.singularity.commitCrime("Mug", focus)); }
+	if (getStabbin(ns, ns.getPlayer())) { await ns.sleep(await wrapNS(ns).singularity.commitCrimeD("Homicide", focus)); }
+	else { await ns.sleep(await wrapNS(ns).singularity.commitCrimeD("Mug", focus)); }
 	ns.singularity.stopAction();
+}
+
+export function getBestWork(ns: NS, person: Player | SleevePerson): any {
+	let crimeprofit = getCrimeProfit(ns, (getStabbin(ns, person) ? "Homicide" : "Mug") as CrimeType, person);
+	let jobslist = getPlayerJobs(ns);
 }
 
 /**
@@ -338,6 +451,39 @@ export function getHacknetIndex(ns: NS, name: string): number {
 	return hacknets.indexOf(name);
 }
 
+export function getHacknetBudget(ns: NS): number {
+	const currentration = 0.25;
+	let expensegap = Math.max(0, ns.getMoneySources().sinceInstall.hacknet + ns.getMoneySources().sinceInstall.hacknet_expenses);
+	let budget = Math.floor(ns.getServerMoneyAvailable("home") * currentration);
+	return Math.min(expensegap, budget);
+}
+
+export function getTotalHacknetStats(ns: NS): { levels: number, ram: number, cores: number, cache: number } {
+	let finalcount = {
+		levels: 0,
+		ram: 0,
+		cores: 0,
+		cache: 0
+	};
+	for (let i = 0; i < ns.hacknet.numNodes(); i++) {
+		finalcount.levels += ns.hacknet.getNodeStats(i).level;
+		finalcount.ram += ns.hacknet.getNodeStats(i).ram;
+		finalcount.cores += ns.hacknet.getNodeStats(i).cores;
+		finalcount.cache += ns.hacknet.getNodeStats(i).cache ?? 0;
+	}
+	return finalcount;
+}
+
+export function hasNetburnerStats(ns: NS): boolean {
+	let hacknetstats = getTotalHacknetStats(ns);
+	let trutharray = [] as boolean[];
+	trutharray.push(hacknetstats.levels >= 100);
+	trutharray.push(hacknetstats.ram >= 8);
+	trutharray.push(hacknetstats.cores >= 4);
+	trutharray.push(hacknetstats.cache >= 5);
+	return trutharray.every(bool => bool);
+}
+
 export function getCompanyServer(ns: NS, company: string): string {
 	let masterlist = masterLister(ns);
 	return masterlist[masterlist.map(serv => ns.getServer(serv).organizationName).indexOf(company)];
@@ -350,16 +496,17 @@ export function getCompanyServer(ns: NS, company: string): string {
  * @param length number of the length of the worklist
  * @returns array of strings of augments of the given length, sorted as described
  */
-export function createWorklist(ns: NS, length: number): string[] {
-	const playeraugs = ns.singularity.getOwnedAugmentations(true);
+export async function createWorklist(ns: NS, length: number): Promise<string[]> {
+	const playeraugs = await wrapNS(ns).singularity.getOwnedAugmentationsD(true);
 	let auglist = [] as string[];
 	for (const faction of desiredfactions) {
-		const factaugs = ns.singularity.getAugmentationsFromFaction(faction);
+		const factaugs = await wrapNS(ns).singularity.getAugmentationsFromFactionD(faction);
 		for (const targaug of factaugs) { if (!auglist.includes(targaug) && !playeraugs.includes(targaug)) { auglist.push(targaug); } }
 	}
 	auglist.sort((a, b) => { return ns.singularity.getAugmentationRepReq(b) - ns.singularity.getAugmentationRepReq(a); })
-	auglist = auglist.filter(aug => ns.singularity.getAugmentationPrereq(aug).every(aug => playeraugs.includes(aug)))
-	auglist = auglist.filter(aug => ns.singularity.getAugmentationFactions(aug).some(fac => ns.getPlayer().factions.includes(fac))).slice(-1 * length);
+	auglist = auglist.filter(async aug => (await wrapNS(ns).singularity.getAugmentationPrereqD(aug)).every(aug => playeraugs.includes(aug)))
+	auglist = auglist.filter(async aug => (await wrapNS(ns).singularity.getAugmentationFactionsD(aug)).some(fac =>
+		ns.getPlayer().factions.includes(fac))).slice(-1 * length);
 	auglist.sort((a, b) => { return ns.singularity.getAugmentationPrice(b) - ns.singularity.getAugmentationPrice(a); })
 	return auglist;
 }
@@ -414,7 +561,7 @@ export function reqCheck(ns: NS, req: PlayerRequirement): boolean {
 		case "numPeopleKilled": return ns.getPlayer().numPeopleKilled >= req.numPeopleKilled;
 		case "bitNodeN": return ns.getResetInfo().currentNode == req.bitNodeN;
 		case "sourceFile": return ns.getResetInfo().ownedSF.get(req.sourceFile) != undefined;
-		case "numAugmentations": return ns.singularity.getOwnedAugmentations(false).length >= req.numAugmentations;
+		case "numAugmentations": return ns.getResetInfo().ownedAugs.entries.length >= req.numAugmentations;
 		case "employedBy": return getPlayerJobs(ns).flat().includes(req.company);
 		case "jobTitle": return getPlayerJobs(ns).flat().includes(req.jobTitle);
 		case "companyReputation": return ns.singularity.getCompanyRep(req.company) >= req.reputation;
@@ -441,10 +588,10 @@ export async function reqSolver(ns: NS, req: PlayerRequirement, focus: boolean):
 			while (getKarma(ns) < req.karma) { await goCrimin(ns, focus); }
 			break;
 		case "money":
-			while (ns.getServerMoneyAvailable("home") > req.money) { await moneyTimeKill(ns, focus); }
+			while (ns.getServerMoneyAvailable("home") < req.money) { await moneyTimeKill(ns, focus); }
 			break;
 		case "numPeopleKilled":
-			while (ns.getPlayer().numPeopleKilled < req.numPeopleKilled) { await ns.sleep(ns.singularity.commitCrime("Homicide", focus)); }
+			while (ns.getPlayer().numPeopleKilled < req.numPeopleKilled) { await ns.sleep(await wrapNS(ns).singularity.commitCrimeD("Homicide", focus)); }
 			break;
 		case "skills":
 			await trainTheseSkills(ns, req.skills, focus);
@@ -457,7 +604,7 @@ export async function reqSolver(ns: NS, req: PlayerRequirement, focus: boolean):
 			await trainHacking(ns, ns.singularity.getCompanyPositionInfo(req.company, "IT Intern").requiredSkills.hacking, focus);
 			ns.singularity.applyToCompany(req.company, "IT");
 			await openTheDoor(ns, getCompanyServer(ns, req.company), false);
-			while (ns.singularity.getCompanyRep(req.company) < req.reputation) {
+			while (ns.singularity.getCompanyRep(req.company) < (req.reputation - (ns.getServer(getCompanyServer(ns, req.company)).backdoorInstalled ? 100000 : 0))) {
 				ns.singularity.workForCompany(req.company, focus);
 				await ns.sleep(10000);
 				ns.singularity.applyToCompany(req.company, "IT");
@@ -468,12 +615,47 @@ export async function reqSolver(ns: NS, req: PlayerRequirement, focus: boolean):
 	ns.singularity.stopAction();
 }
 
+export function hasThisReq(reqs: PlayerRequirement[], type: string): boolean {
+	let foundit = false;
+	for (const req of reqs) {
+		if (req.type == "someCondition" && hasThisReq(req.conditions, type)) { foundit = true; }
+		if (req.type == "everyCondition" && hasThisReq(req.conditions, type)) { foundit = true; }
+		if (req.type == type) { foundit = true; }
+	}
+	return foundit;
+}
+
+export function getThisReq(reqs: PlayerRequirement[], type: string): PlayerRequirement | undefined {
+	let thething = undefined;
+	for (const req of reqs) {
+		if (req.type == "someCondition" && hasThisReq(req.conditions, type)) { thething = getThisReq(req.conditions, type); }
+		if (req.type == "everyCondition" && hasThisReq(req.conditions, type)) { thething = getThisReq(req.conditions, type); }
+		if (req.type == type) { thething = req }
+	}
+	return thething;
+}
+
+export function youMustBeThisTall(ns: NS, reqs: PlayerRequirement[]): boolean {
+	let req = getThisReq(reqs, "skills") as SkillRequirement;
+	if (req.type == "skills") {
+		return Object.keys(req.skills).every(skillName => {
+			return (req.skills[skillName as keyof Skills] ?? 0) <= Math.trunc(ns.getPlayer().skills[skillName as keyof Skills] * 1.2)
+		});
+	} else { return false; }
+}
+
 export async function joinThisFaction(ns: NS, faction: string, focus: boolean): Promise<void> {
 	if (!ns.getPlayer().factions.includes(faction) && !ns.singularity.checkFactionInvitations().includes(faction)) {
 		const facreqs = ns.singularity.getFactionInviteRequirements(faction);
 		let unmet = [];
 		for (const req of facreqs) { if (!reqCheck(ns, req)) { unmet.push(req); } }
-		if (unmet.every(req => req.type != "numAugmentations")) { for (const req of unmet) { await reqSolver(ns, req, focus); } }
+		let passesmuster = true;
+		if (hasThisReq(unmet, "numAugmentations")) { passesmuster = false; }
+		if (hasThisReq(unmet, "bitNodeN")) { passesmuster = false; }
+		if (hasThisReq(unmet, "sourceFile")) { passesmuster = false; }
+		if (hasThisReq(unmet, "jobTitle")) { passesmuster = false; } //only for now to prevent an issue with the requirement being unhandled
+		if (hasThisReq(unmet, "skills") && !youMustBeThisTall(ns, unmet)) { passesmuster = false; }
+		if (passesmuster) { for (const req of unmet) { await reqSolver(ns, req, focus); } }
 	}
 	if (ns.singularity.checkFactionInvitations().includes(faction)) { ns.singularity.joinFaction(faction); }
 }

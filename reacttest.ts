@@ -1,12 +1,12 @@
 import { NS } from '@ns';
 import ReactLib from 'react';
-import { howTheTurnsTable } from './bitlib';
+import { wrapNS } from './bitlib';
 declare const React: typeof ReactLib;
 export async function main(ns: NS): Promise<void> {
+	const wns = wrapNS(ns);
 	ns.tail();
-	let infillocs = ns.infiltration.getPossibleLocations();
-	for (const location of infillocs) {
-		let infil = ns.infiltration.getInfiltration(location.name);
-		ns.print(infil.location.name + " " + infil.location.city + " " + infil.difficulty);
-	}
+	ns.clearLog();
+	let homestats = await wns.getServerD("home");
+	let crimestat = await wns.singularity.getCrimeChanceD("Mug");
+	ns.print(homestats.cpuCores + " " + crimestat);
 }

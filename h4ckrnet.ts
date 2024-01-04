@@ -1,30 +1,31 @@
 import { NS } from "@ns";
-import { quietTheBabblingThrong, hasFocusPenalty, thereCanBeOnlyOne } from "./bitlib";
+import { quietTheBabblingThrong, hasFocusPenalty, thereCanBeOnlyOne, getHacknetBudget, hasNetburnerStats } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	thereCanBeOnlyOne(ns);
 	ns.run("babysitter.js");
 	const h4ck = ns.hacknet;
 	quietTheBabblingThrong(ns);
-	if (hasFocusPenalty(ns)) { ns.tail(); }
+	if (await hasFocusPenalty(ns)) { ns.tail(); }
 	while (true) {
-		let targetcost = Math.trunc(ns.getServerMoneyAvailable("home") * 0.25);
+		let targetcost = getHacknetBudget(ns);
+		let netburnerstats = hasNetburnerStats(ns);
 		ns.print("spending allotment is " + ns.formatNumber(targetcost));
 		let costarray = [];
 		let newcost = Infinity;
 		if (h4ck.numNodes() < h4ck.maxNumNodes()) {
 			newcost = h4ck.getPurchaseNodeCost();
-			if (newcost > targetcost && h4ck.numNodes() > 0) { newcost = Infinity; }
+			if (newcost > targetcost && h4ck.numNodes() > 0 && netburnerstats) { newcost = Infinity; }
 		}
 		for (let i = 0; i < h4ck.numNodes(); i++) {
 			let upgarray = [0, 0, 0, 0];
 			upgarray[0] = h4ck.getLevelUpgradeCost(i);
-			if (upgarray[0] > targetcost) { upgarray[0] = Infinity; }
+			if (upgarray[0] > targetcost && netburnerstats) { upgarray[0] = Infinity; }
 			upgarray[1] = h4ck.getRamUpgradeCost(i);
-			if (upgarray[1] > targetcost) { upgarray[1] = Infinity; }
+			if (upgarray[1] > targetcost && netburnerstats) { upgarray[1] = Infinity; }
 			upgarray[2] = h4ck.getCoreUpgradeCost(i);
-			if (upgarray[2] > targetcost) { upgarray[2] = Infinity; }
+			if (upgarray[2] > targetcost && netburnerstats) { upgarray[2] = Infinity; }
 			upgarray[3] = h4ck.getCacheUpgradeCost(i);
-			if (upgarray[3] > targetcost) { upgarray[3] = Infinity; }
+			if (upgarray[3] > targetcost && netburnerstats) { upgarray[3] = Infinity; }
 			costarray.push(upgarray);
 		}
 		let nextdex = [-1, -1, newcost];

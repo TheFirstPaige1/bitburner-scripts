@@ -3,7 +3,7 @@ import { hasFocusPenalty, lowestCombatStat } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('ALL');
 	const target = ns.args[0] as number;
-	const focus = hasFocusPenalty(ns);
+	const focus = await hasFocusPenalty(ns);
 	while (!ns.singularity.travelToCity("Sector-12")) { await ns.sleep(60000); }
 	let loweststat = lowestCombatStat(ns.getPlayer());
 	while (loweststat.value < target) {

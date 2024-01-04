@@ -3,7 +3,7 @@ import { hasFocusPenalty, getHacknetIndex } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.disableLog('sleep');
 	ns.disableLog('getServerMaxRam');
-	if (hasFocusPenalty(ns)) { ns.tail(); }
+	if (await hasFocusPenalty(ns)) { ns.tail(); }
 	let ramlimit = ns.getServerMaxRam("home");
 	let pservlimit = Math.min(ramlimit, ns.getPurchasedServerMaxRam());
 	let serverlimit = ns.getPurchasedServerLimit();
