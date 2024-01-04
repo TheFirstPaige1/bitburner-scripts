@@ -561,7 +561,7 @@ export function reqCheck(ns: NS, req: PlayerRequirement): boolean {
 		case "numPeopleKilled": return ns.getPlayer().numPeopleKilled >= req.numPeopleKilled;
 		case "bitNodeN": return ns.getResetInfo().currentNode == req.bitNodeN;
 		case "sourceFile": return ns.getResetInfo().ownedSF.get(req.sourceFile) != undefined;
-		case "numAugmentations": return ns.getResetInfo().ownedAugs.entries.length >= req.numAugmentations;
+		case "numAugmentations": return ns.getResetInfo().ownedAugs.size >= req.numAugmentations;
 		case "employedBy": return getPlayerJobs(ns).flat().includes(req.company);
 		case "jobTitle": return getPlayerJobs(ns).flat().includes(req.jobTitle);
 		case "companyReputation": return ns.singularity.getCompanyRep(req.company) >= req.reputation;
