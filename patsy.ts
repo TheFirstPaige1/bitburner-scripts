@@ -14,6 +14,7 @@ export async function main(ns: NS): Promise<void> {
 	for (const serv of masterLister(ns)) { ns.scp(ns.ls(serv, ".lit"), "home", serv); }
 	joinEveryInvitedFaction(ns);
 	ns.run("totalhack.js");
+	ns.run("ganggang.js");
 	sing.universityCourse("Rothman University", "Computer Science", focus);
 	await ns.sleep(Math.max(1, (300000 - (Date.now() - ns.getResetInfo().lastAugReset))));
 	const progs = ["BruteSSH.exe", "FTPCrack.exe"];

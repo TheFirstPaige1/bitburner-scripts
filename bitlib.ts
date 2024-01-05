@@ -5,7 +5,6 @@ import {
 	Singularity, SkillRequirement, Skills, Sleeve, SleevePerson, Stanek, TIX
 } from "@ns";
 
-
 // every possible function type is a subtype of this
 type AnyFn = (...args: any) => any;
 
@@ -30,73 +29,6 @@ export interface ProxyNS extends Proxied<NS> {
 	readonly stock: Proxied<TIX>;
 	readonly stanek: Proxied<Stanek>;
 }
-
-async function callInSubprocess(ns: NS, fn: string, args: any[]): Promise<any> {
-	const id = 0;
-	const reply = ns.pid;
-	let ramhost = "home";
-	ns.exec(
-		'memalloc.js',
-		ramhost,
-		{ ramOverride: 1.6 + ns.getFunctionRamCost(fn), temporary: true },
-		reply, id, fn, ...args.map(arg => JSON.stringify(arg))
-	)
-	let data = ns.readPort(reply);
-	while (data == "NULL PORT DATA") {
-		await ns.asleep(1);
-		data = ns.readPort(reply);
-	}
-	return JSON.parse(data.toString()).result;
-}
-
-function makeSubproxy(ns: NS, somename: string | symbol, realvalue: any): any {
-	const wrappedNS = new Proxy(realvalue, {
-		get(subns, property) {
-			const realvalue = (subns as any)[property];
-			if (typeof realvalue === 'object' && !Array.isArray(realvalue)) {
-				return makeSubproxy(ns, property, realvalue);
-			} else if (realvalue !== undefined) {
-				return realvalue;
-			}
-			if (realvalue !== undefined) return realvalue;
-			if (typeof property !== 'string') return undefined;
-			if (!property.endsWith('D')) return undefined;
-			const realFunction = property.slice(0, -1);
-			if (typeof (subns as any)[realFunction] !== "function") return undefined;
-			const proxiedFunc = async (...args: any[]) => {
-				const result = callInSubprocess(ns, somename as string + "." + realFunction, args);
-				return result;
-			};
-			return proxiedFunc;
-		}
-	});
-	return wrappedNS as any;
-}
-
-export function wrapNS(ns: NS): ProxyNS {
-	const wrappedNS = new Proxy(ns, {
-		get(ns, property) {
-			const realvalue = (ns as any)[property];
-			if (typeof realvalue === 'object' && !Array.isArray(realvalue)) {
-				return makeSubproxy(ns, property, realvalue);
-			} else if (realvalue !== undefined) {
-				return realvalue;
-			}
-			if (realvalue !== undefined) return realvalue;
-			if (typeof property !== 'string') return undefined;
-			if (!property.endsWith('D')) return undefined;
-			const realFunction = property.slice(0, -1);
-			if (typeof (ns as any)[realFunction] !== "function") return undefined;
-			const proxiedFunc = async (...args: any[]) => {
-				const result = callInSubprocess(ns, realFunction, args);
-				return result;
-			};
-			return proxiedFunc;
-		}
-	});
-	return wrappedNS as any;
-}
-
 
 /**
  * A hardcoded list of most of the normal factions in the game, ordered in a rough descending list of work priority. 
@@ -160,6 +92,7 @@ export const gangNames = [
 export function quietTheBabblingThrong(ns: NS): void {
 	ns.disableLog('disableLog');
 	ns.disableLog('sleep');
+	ns.disableLog('asleep');
 	ns.disableLog('brutessh');
 	ns.disableLog('ftpcrack');
 	ns.disableLog('relaysmtp');
@@ -180,6 +113,76 @@ export function quietTheBabblingThrong(ns: NS): void {
 	ns.disableLog('singularity.applyToCompany');
 	ns.disableLog('singularity.workForCompany');
 	ns.disableLog('singularity.purchaseAugmentation');
+}
+
+async function callInSubprocess(ns: NS, fn: string, args: any[]): Promise<any> {
+	const id = 0;
+	const reply = ns.pid;
+	const ramcost = 1.6 + ns.getFunctionRamCost(fn);
+	let ramhost = "home";
+	while ((ns.getServerMaxRam(ramhost) - ns.getServerUsedRam(ramhost)) < ramcost) {
+		await ns.sleep(1);
+	}
+	ns.exec(
+		'memalloc.js',
+		ramhost,
+		{ ramOverride: ramcost, temporary: true },
+		reply, id, fn, ...args.map(arg => JSON.stringify(arg))
+	)
+	let data = ns.readPort(reply);
+	while (data == "NULL PORT DATA") {
+		await ns.sleep(1);
+		data = ns.readPort(reply);
+	}
+	return JSON.parse(data.toString()).result;
+}
+
+function makeSubproxy(ns: NS, somename: string | symbol, realvalue: any): any {
+	const wrappedNS = new Proxy(realvalue, {
+		get(subns, property) {
+			const realvalue = (subns as any)[property];
+			if (typeof realvalue === 'object' && !Array.isArray(realvalue)) {
+				return makeSubproxy(ns, property, realvalue);
+			} else if (realvalue !== undefined) {
+				return realvalue;
+			}
+			if (realvalue !== undefined) return realvalue;
+			if (typeof property !== 'string') return undefined;
+			if (!property.endsWith('D')) return undefined;
+			const realFunction = property.slice(0, -1);
+			if (typeof (subns as any)[realFunction] !== "function") return undefined;
+			const proxiedFunc = async (...args: any[]) => {
+				const result = callInSubprocess(ns, somename as string + "." + realFunction, args);
+				return result;
+			};
+			return proxiedFunc;
+		}
+	});
+	return wrappedNS as any;
+}
+
+export function wrapNS(ns: NS): ProxyNS {
+	const wrappedNS = new Proxy(ns, {
+		get(ns, property) {
+			const realvalue = (ns as any)[property];
+			if (typeof realvalue === 'object' && !Array.isArray(realvalue)) {
+				return makeSubproxy(ns, property, realvalue);
+			} else if (realvalue !== undefined) {
+				return realvalue;
+			}
+			if (realvalue !== undefined) return realvalue;
+			if (typeof property !== 'string') return undefined;
+			if (!property.endsWith('D')) return undefined;
+			const realFunction = property.slice(0, -1);
+			if (typeof (ns as any)[realFunction] !== "function") return undefined;
+			const proxiedFunc = async (...args: any[]) => {
+				const result = callInSubprocess(ns, realFunction, args);
+				return result;
+			};
+			return proxiedFunc;
+		}
+	});
+	return wrappedNS as any;
 }
 
 /**
@@ -503,8 +506,8 @@ export async function createWorklist(ns: NS, length: number): Promise<string[]> 
 		const factaugs = await wrapNS(ns).singularity.getAugmentationsFromFactionD(faction);
 		for (const targaug of factaugs) { if (!auglist.includes(targaug) && !playeraugs.includes(targaug)) { auglist.push(targaug); } }
 	}
-	auglist.sort((a, b) => { return ns.singularity.getAugmentationRepReq(b) - ns.singularity.getAugmentationRepReq(a); })
-	auglist = auglist.filter(async aug => (await wrapNS(ns).singularity.getAugmentationPrereqD(aug)).every(aug => playeraugs.includes(aug)))
+	auglist.sort((a, b) => { return ns.singularity.getAugmentationRepReq(b) - ns.singularity.getAugmentationRepReq(a); });
+	auglist = auglist.filter(async aug => (await wrapNS(ns).singularity.getAugmentationPrereqD(aug)).every(aug => playeraugs.includes(aug)));
 	auglist = auglist.filter(async aug => (await wrapNS(ns).singularity.getAugmentationFactionsD(aug)).some(fac =>
 		ns.getPlayer().factions.includes(fac))).slice(-1 * length);
 	auglist.sort((a, b) => { return ns.singularity.getAugmentationPrice(b) - ns.singularity.getAugmentationPrice(a); })
