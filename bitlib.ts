@@ -1,8 +1,9 @@
 import ReactLib from 'react';
 declare const React: typeof ReactLib;
 import {
-	Bladeburner, CityName, CodingContract, CompanyName, Corporation, CrimeType, Gang, Grafting, JobName, NS, Player, PlayerRequirement, ReactElement,
-	Singularity, SkillRequirement, Skills, Sleeve, SleevePerson, Stanek, TIX
+	AugmentPair,
+	Bladeburner, CityName, CodingContract, CompanyName, Corporation, CrimeType, Gang, Grafting, JobName, Multipliers, NS, Player, PlayerRequirement, ReactElement,
+	Singularity, SkillRequirement, Skills, Sleeve, SleevePerson, SleeveTask, Stanek, TIX
 } from "@ns";
 
 // every possible function type is a subtype of this
@@ -28,6 +29,28 @@ export interface ProxyNS extends Proxied<NS> {
 	readonly sleeve: Proxied<Sleeve>;
 	readonly stock: Proxied<TIX>;
 	readonly stanek: Proxied<Stanek>;
+}
+
+export async function asyncFilter<T>(input: T[], testFunc: (item: T) => Promise<boolean>): Promise<T[]> {
+	const result: T[] = [];
+	for (const item of input) {
+		if (await testFunc(item)) {
+			result.push(item);
+		}
+	}
+	return result;
+}
+
+export async function sortByAsyncKey<T>(input: T[], calculateKey: (item: T) => Promise<number>): Promise<T[]> {
+	const keys = new Map<T, number>();
+	for (const item of input) {
+		keys.set(item, await calculateKey(item));
+	}
+	return input.sort((itemA, itemB) => {
+		const keyA = keys.get(itemA), keyB = keys.get(itemB);
+		if (keyA === undefined || keyB === undefined) throw 'unreachable';
+		return keyA - keyB; // sort lowest to highest; to sort highest to lowest, make calculateKey return the thing times -1
+	});
 }
 
 /**
@@ -287,6 +310,26 @@ export function masterLister(ns: NS): string[] {
 	return masterlist;
 }
 
+export async function augLister(ns: NS): Promise<string[]> {
+	let auglist = [] as string[];
+	for (const faction of desiredfactions) {
+		const factaugs = await wrapNS(ns).singularity.getAugmentationsFromFactionD(faction);
+		for (const targaug of factaugs) { if (!auglist.includes(targaug)) { auglist.push(targaug); } }
+	}
+	return auglist.sort((a, b) => { return ns.singularity.getAugmentationRepReq(b) - ns.singularity.getAugmentationRepReq(a); });
+}
+
+export async function augFilteredLister(ns: NS): Promise<string[]> {
+	const playeraugs = await wrapNS(ns).singularity.getOwnedAugmentationsD(true);
+	let auglist = [] as string[];
+	for (const faction of ns.getPlayer().factions) {
+		const factaugs = await wrapNS(ns).singularity.getAugmentationsFromFactionD(faction);
+		for (const targaug of factaugs) { if (!auglist.includes(targaug) && !playeraugs.includes(targaug)) { auglist.push(targaug); } }
+	}
+	auglist = await asyncFilter(auglist, (async aug => (await wrapNS(ns).singularity.getAugmentationPrereqD(aug)).every(aug => playeraugs.includes(aug))));
+	return auglist.sort((a, b) => { return ns.singularity.getAugmentationRepReq(b) - ns.singularity.getAugmentationRepReq(a); });
+}
+
 /**
  * Returns an array of the string and level of the lowest of the combat stats of the player or sleeve passed as an argument.
  * @param ns BitBurner NS object
@@ -335,9 +378,11 @@ export async function hasFocusPenalty(ns: NS): Promise<boolean> {
  */
 export async function factionHasAugs(ns: NS, faction: string): Promise<boolean> {
 	let factionaugs = await wrapNS(ns).singularity.getAugmentationsFromFactionD(faction);
-	factionaugs = factionaugs.filter(async aug => !(await wrapNS(ns).singularity.getOwnedAugmentationsD(true)).includes(aug));
+	const ownedAugs = await wrapNS(ns).singularity.getOwnedAugmentationsD(true);
+	factionaugs = factionaugs.filter(async aug => !ownedAugs.includes(aug));
 	if (ns.gang.inGang() && ns.gang.getGangInformation().faction != faction) {
-		factionaugs = factionaugs.filter(async aug => !(await wrapNS(ns).singularity.getAugmentationsFromFactionD(ns.gang.getGangInformation().faction)).includes(aug));
+		const gangAugs = await wrapNS(ns).singularity.getAugmentationsFromFactionD(ns.gang.getGangInformation().faction);
+		factionaugs = factionaugs.filter(async aug => !gangAugs.includes(aug));
 	}
 	return (factionaugs.length > 0);
 }
@@ -492,6 +537,10 @@ export function getCompanyServer(ns: NS, company: string): string {
 	return masterlist[masterlist.map(serv => ns.getServer(serv).organizationName).indexOf(company)];
 }
 
+export async function getWaitingCount(ns: NS): Promise<number> {
+	return ((await wrapNS(ns).singularity.getOwnedAugmentationsD(true)).length) - ((await wrapNS(ns).singularity.getOwnedAugmentationsD(false)).length);
+}
+
 /**
  * Creates a worklist, an array of specified length, containing strings of the augments with the lowest rep requirements across all joined factions.
  * The returned array won't contain augments with unment prereqs, and will be sorted in price high -> low.
@@ -500,16 +549,8 @@ export function getCompanyServer(ns: NS, company: string): string {
  * @returns array of strings of augments of the given length, sorted as described
  */
 export async function createWorklist(ns: NS, length: number): Promise<string[]> {
-	const playeraugs = await wrapNS(ns).singularity.getOwnedAugmentationsD(true);
-	let auglist = [] as string[];
-	for (const faction of desiredfactions) {
-		const factaugs = await wrapNS(ns).singularity.getAugmentationsFromFactionD(faction);
-		for (const targaug of factaugs) { if (!auglist.includes(targaug) && !playeraugs.includes(targaug)) { auglist.push(targaug); } }
-	}
-	auglist.sort((a, b) => { return ns.singularity.getAugmentationRepReq(b) - ns.singularity.getAugmentationRepReq(a); });
-	auglist = auglist.filter(async aug => (await wrapNS(ns).singularity.getAugmentationPrereqD(aug)).every(aug => playeraugs.includes(aug)));
-	auglist = auglist.filter(async aug => (await wrapNS(ns).singularity.getAugmentationFactionsD(aug)).some(fac =>
-		ns.getPlayer().factions.includes(fac))).slice(-1 * length);
+	let auglist = await augFilteredLister(ns);
+	auglist = auglist.slice(-1 * length);
 	auglist.sort((a, b) => { return ns.singularity.getAugmentationPrice(b) - ns.singularity.getAugmentationPrice(a); })
 	return auglist;
 }
@@ -710,8 +751,47 @@ export function thereCanBeOnlyOne(ns: NS): void {
 	for (const process of ns.ps()) { if (process.pid != ns.pid && process.filename == ns.getScriptName()) { ns.kill(process.pid); } }
 }
 
-export function bitnodeAccess(ns: NS, node: number, level: number): boolean { return (ns.getResetInfo().ownedSF.get(node) || 0) >= level; }
+export function bitnodeAccess(ns: NS, node: number, level: number): boolean {
+	return (ns.getResetInfo().currentNode == node) || ((ns.getResetInfo().ownedSF.get(node) || 0) >= level);
+}
 
 export function toFile(ns: NS, filename: string, filedata: any): void { ns.write(filename, JSON.stringify(filedata), "w"); }
 
 export function fromFile(ns: NS, filename: string): any { return JSON.parse(ns.read(filename)); }
+
+export async function isSleeveAug(ns: NS, augment: string): Promise<boolean> {
+	const desiredstats: (keyof Multipliers)[] = ["strength", "strength_exp", "agility", "agility_exp", "defense", "defense_exp", "dexterity", "dexterity_exp",
+		"crime_money", "crime_success", "company_rep", "faction_rep"];
+	const augstats = await wrapNS(ns).singularity.getAugmentationStatsD(augment);
+	return desiredstats.some(stat => augstats[stat] > 1);
+}
+
+export async function getNextSleeveAug(ns: NS, sleeve: number): Promise<AugmentPair> {
+	let sleeveaugs = await asyncFilter(await wrapNS(ns).sleeve.getSleevePurchasableAugsD(sleeve), async aug => await isSleeveAug(ns, aug.name));
+	return sleeveaugs.sort((a, b) => { return a.cost - b.cost; })[0];
+}
+
+export async function createWorkerList(ns: NS): Promise<{
+	id: number,
+	currentTask: SleeveTask | null,
+	setTask: SleeveTask | null,
+	object: Player | SleevePerson
+}[]> {
+	let workerlist = [{
+		id: -1,
+		currentTask: ns.singularity.getCurrentWork() as SleeveTask | null,
+		setTask: ns.singularity.getCurrentWork() as SleeveTask | null,
+		object: ns.getPlayer() as Player | SleevePerson
+	}];
+	const sleevecount = await wrapNS(ns).sleeve.getNumSleevesD();
+	for (let i = 0; i < sleevecount; i++) {
+		workerlist.push({
+			id: i,
+			currentTask: await wrapNS(ns).sleeve.getTaskD(i),
+			setTask: await wrapNS(ns).sleeve.getTaskD(i),
+			object: await wrapNS(ns).sleeve.getSleeveD(i)
+		});
+	}
+	return workerlist;
+}
+

@@ -1,7 +1,7 @@
 import { NS } from "@ns";
 import {
 	hasFocusPenalty, quietTheBabblingThrong, moneyTimeKill, createWorklist, desiredfactions, factionHasAugs,
-	masterLister, joinEveryInvitedFaction, checkFactionEnemies, joinThisFaction, wrapNS
+	masterLister, joinEveryInvitedFaction, checkFactionEnemies, joinThisFaction, wrapNS, getWaitingCount
 } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 	ns.killall("home", true);
@@ -41,7 +41,8 @@ export async function main(ns: NS): Promise<void> {
 	while (ns.isRunning(npid)) { await moneyTimeKill(ns, focus); }
 	ns.run("serverstager.js", 1, Math.trunc(ns.getServerMaxRam("home") / 2));
 	ns.run("stockwatcher.js");
-	const augqueue = 7 - ((await wsing.getOwnedAugmentationsD(true)).length - (await wsing.getOwnedAugmentationsD(false)).length);
+	const waitingcount = await getWaitingCount(ns);
+	const augqueue = Math.max(0, (7 - waitingcount));
 	sing.stopAction();
 	let worklist = await createWorklist(ns, augqueue);
 	let iterator = 0;
@@ -64,12 +65,21 @@ export async function main(ns: NS): Promise<void> {
 			+ (await wsing.getAugmentationFactionsD(aug)).toString());
 	}
 	ns.run("servershare.js");
+	let gangaugs = [] as string[];
+	let gangfac = "";
+	let buylist = [] as string[];
+	if (ns.gang.inGang()) {
+		gangfac = ns.gang.getGangInformation().faction
+		gangaugs = await wsing.getAugmentationsFromFactionD(gangfac);
+	}
 	for (const targaug of worklist) {
-		if (!(await wsing.getAugmentationFactionsD(targaug)).some(fac => sing.getFactionRep(fac) >= sing.getAugmentationRepReq(targaug))) {
-			if (!ns.gang.inGang() || (ns.gang.inGang() && !(await wsing.getAugmentationFactionsD(targaug)).includes(ns.gang.getGangInformation().faction))) {
-				let workfac = (await wsing.getAugmentationFactionsD(targaug)).filter(fac => ns.getPlayer().factions.includes(fac)).sort((a, b) => {
+		if (!gangaugs.includes(targaug)) {
+			let augfacs = await wsing.getAugmentationFactionsD(targaug);
+			if (!augfacs.some(fac => sing.getFactionRep(fac) >= sing.getAugmentationRepReq(targaug))) {
+				let workfac = augfacs.filter(fac => ns.getPlayer().factions.includes(fac)).sort((a, b) => {
 					return sing.getFactionFavor(b) - sing.getFactionFavor(a);
 				})[0];
+				buylist.push(workfac);
 				ns.print("aiming to get " + targaug + " from " + workfac + "...");
 				if (!sing.workForFaction(workfac, "hacking", focus)) { sing.workForFaction(workfac, "field", focus) }
 				while (sing.getFactionRep(workfac) < sing.getAugmentationRepReq(targaug)) {
@@ -79,14 +89,21 @@ export async function main(ns: NS): Promise<void> {
 					await ns.sleep(60000);
 				}
 				sing.stopAction();
+			} else {
+				buylist.push(augfacs.sort((a, b) => { return sing.getFactionRep(b) - sing.getFactionRep(a); })[0]);
 			}
+		} else {
+			buylist.push(gangfac);
+			ns.print("aiming to get " + targaug + " from " + gangfac + "...");
+			while (sing.getFactionRep(gangfac) < sing.getAugmentationRepReq(targaug)) { await moneyTimeKill(ns, focus); }
 		}
 	}
 	ns.scriptKill("h4ckrnet.js", "home");
 	ns.scriptKill("babysitter.js", "home");
 	ns.run("hashout.js");
-	for (const targaug of worklist) {
-		let targfac = (await wsing.getAugmentationFactionsD(targaug)).sort((a, b) => { return sing.getFactionRep(b) - sing.getFactionRep(a); })[0];
+	for (let i = 0; i < worklist.length; i++) {
+		let targaug = worklist[i];
+		let targfac = buylist[i];
 		ns.print("buying " + targaug + " from " + targfac + "...");
 		while (!(await wsing.purchaseAugmentationD(targfac, targaug))) { await moneyTimeKill(ns, focus); }
 	}
