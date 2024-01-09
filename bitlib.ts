@@ -316,7 +316,7 @@ export async function augLister(ns: NS): Promise<string[]> {
 		const factaugs = await wrapNS(ns).singularity.getAugmentationsFromFactionD(faction);
 		for (const targaug of factaugs) { if (!auglist.includes(targaug)) { auglist.push(targaug); } }
 	}
-	return auglist.sort((a, b) => { return ns.singularity.getAugmentationRepReq(b) - ns.singularity.getAugmentationRepReq(a); });
+	return auglist.sort((a, b) => { return ns.singularity.getAugmentationRepReq(a) - ns.singularity.getAugmentationRepReq(b); });
 }
 
 export async function augFilteredLister(ns: NS): Promise<string[]> {
@@ -327,7 +327,7 @@ export async function augFilteredLister(ns: NS): Promise<string[]> {
 		for (const targaug of factaugs) { if (!auglist.includes(targaug) && !playeraugs.includes(targaug)) { auglist.push(targaug); } }
 	}
 	auglist = await asyncFilter(auglist, (async aug => (await wrapNS(ns).singularity.getAugmentationPrereqD(aug)).every(aug => playeraugs.includes(aug))));
-	return auglist.sort((a, b) => { return ns.singularity.getAugmentationRepReq(b) - ns.singularity.getAugmentationRepReq(a); });
+	return auglist.sort((a, b) => { return ns.singularity.getAugmentationRepReq(a) - ns.singularity.getAugmentationRepReq(b); });
 }
 
 /**
@@ -387,6 +387,10 @@ export async function factionHasAugs(ns: NS, faction: string): Promise<boolean> 
 	return (factionaugs.length > 0);
 }
 
+export async function getRemainingFactions(ns: NS): Promise<string[]> {
+	return await asyncFilter(desiredfactions, async fac => await factionHasAugs(ns, fac));
+}
+
 export function getPlayerJobs(ns: NS): [CompanyName, JobName][] { return Object.entries(ns.getPlayer().jobs) as [CompanyName, JobName][]; }
 
 export async function getCrimeProfit(ns: NS, crime: CrimeType, person: Player | SleevePerson): Promise<number> {
@@ -408,16 +412,41 @@ export async function wageSlavery(ns: NS, focus: boolean): Promise<void> {
 	ns.singularity.stopAction();
 }
 
-export function getStabbin(ns: NS, person: Player | SleevePerson): boolean { return ns.formulas.work.crimeSuccessChance(person, "Homicide") >= 0.5; }
+export function getStabbin(ns: NS, person: Player | SleevePerson): "Homicide" | "Mug" {
+	return (ns.formulas.work.crimeSuccessChance(person, "Homicide") >= 0.5) ? "Homicide" : "Mug"
+}
 
 export async function goCrimin(ns: NS, focus: boolean): Promise<void> {
-	if (getStabbin(ns, ns.getPlayer())) { await ns.sleep(await wrapNS(ns).singularity.commitCrimeD("Homicide", focus)); }
-	else { await ns.sleep(await wrapNS(ns).singularity.commitCrimeD("Mug", focus)); }
+	await ns.sleep(await wrapNS(ns).singularity.commitCrimeD(getStabbin(ns, ns.getPlayer()), focus));
 	ns.singularity.stopAction();
 }
 
+export async function isSleeveReady(ns: NS, sleeve: number): Promise<boolean> {
+	const sleevestats = await wrapNS(ns).sleeve.getSleeveD(sleeve);
+	return sleevestats.shock == 0 && sleevestats.sync == 100;
+}
+
+export async function getReadySleeveNum(ns: NS): Promise<number> {
+	const sleevecount = await wrapNS(ns).sleeve.getNumSleevesD();
+	let readysleeves = 0;
+	for (let i = 0; i < sleevecount; i++) { if (await isSleeveReady(ns, i)) { readysleeves++; } }
+	return readysleeves;
+}
+
+export async function groupResetTask(ns: NS, focus: boolean): Promise<void> {
+	ns.singularity.stopAction();
+	await wrapNS(ns).singularity.commitCrimeD(getStabbin(ns, ns.getPlayer()), focus);
+	const sleevecount = await wrapNS(ns).sleeve.getNumSleevesD();
+	for (let i = 0; i < sleevecount; i++) {
+		if (await isSleeveReady(ns, i)) {
+			const sleevestats = await wrapNS(ns).sleeve.getSleeveD(i);
+			await wrapNS(ns).sleeve.setToCommitCrimeD(i, getStabbin(ns, sleevestats));
+		}
+	}
+}
+
 export function getBestWork(ns: NS, person: Player | SleevePerson): any {
-	let crimeprofit = getCrimeProfit(ns, (getStabbin(ns, person) ? "Homicide" : "Mug") as CrimeType, person);
+	let crimeprofit = getCrimeProfit(ns, (getStabbin(ns, person)) as CrimeType, person);
 	let jobslist = getPlayerJobs(ns);
 }
 
@@ -443,6 +472,10 @@ export async function moneyTimeKill(ns: NS, focus: boolean): Promise<void> {
 export async function cityTravel(ns: NS, target: string, focus: boolean): Promise<void> {
 	let citytarg = target as CityName;
 	if (citytarg != ns.getPlayer().city) { while (!ns.singularity.travelToCity(citytarg)) { await moneyTimeKill(ns, focus); } }
+}
+
+export async function groupTravel(ns: NS, target: string, focus: boolean): Promise<void> {
+	//ns.sleeve.travel()
 }
 
 /**
@@ -549,27 +582,48 @@ export async function getWaitingCount(ns: NS): Promise<number> {
  * @returns array of strings of augments of the given length, sorted as described
  */
 export async function createWorklist(ns: NS, length: number): Promise<string[]> {
-	let auglist = await augFilteredLister(ns);
+	let auglist = (await augFilteredLister(ns)).reverse();
 	auglist = auglist.slice(-1 * length);
 	auglist.sort((a, b) => { return ns.singularity.getAugmentationPrice(b) - ns.singularity.getAugmentationPrice(a); })
 	return auglist;
 }
 
-export function checkFactionEnemies(ns: NS, faction: string): boolean {
+/*
+export async function createWorklistNew(ns: NS, length: number): Promise<[string, string][]> {
+	let gangfac = "";
+	let gangaugs = [];
+	if (ns.gang.inGang()) {
+		gangfac = ns.gang.getGangInformation().faction;
+		gangaugs = await wrapNS(ns).singularity.getAugmentationsFromFactionD(gangfac);
+	}
+	let auglist = await augLister(ns);
+	let worklist = [] as [string, string][];
+	let iterator = 0;
+	while (worklist.length < length) {
+		let targfac = desiredfactions[iterator];
+		let facaugs = await wrapNS(ns).singularity.getAugmentationsFromFactionD(targfac);
+	}
+}
+*/
+
+export function getFactionEnemies(faction: string): string[] {
 	const cityFactionsMask = [["Sector-12", "Aevum"], ["Chongqing", "New Tokyo", "Ishima"], ["Volhaven"]];
-	let playf = ns.getPlayer().factions;
 	let enemieslist = [];
-	if (cityFactionsMask[0].some(city => playf.includes(city))) {
+	if (cityFactionsMask[0].includes(faction)) {
 		enemieslist.push(...cityFactionsMask[1]);
 		enemieslist.push(...cityFactionsMask[2]);
-	} else if (cityFactionsMask[1].some(city => playf.includes(city))) {
+	} else if (cityFactionsMask[1].includes(faction)) {
 		enemieslist.push(...cityFactionsMask[0]);
 		enemieslist.push(...cityFactionsMask[2]);
-	} else if (cityFactionsMask[2].some(city => playf.includes(city))) {
+	} else if (cityFactionsMask[2].includes(faction)) {
 		enemieslist.push(...cityFactionsMask[0]);
 		enemieslist.push(...cityFactionsMask[1]);
 	}
-	return !enemieslist.includes(faction);
+	return enemieslist;
+}
+
+export function checkFactionEnemies(ns: NS, faction: string): boolean {
+	return ns.getPlayer().factions.every(fac => !getFactionEnemies(fac).includes(faction));
 }
 
 export function joinEveryInvitedFaction(ns: NS): void {
@@ -704,6 +758,15 @@ export async function joinThisFaction(ns: NS, faction: string, focus: boolean): 
 	if (ns.singularity.checkFactionInvitations().includes(faction)) { ns.singularity.joinFaction(faction); }
 }
 
+export function getFactionUnmetReqs(ns: NS, faction: string): PlayerRequirement[] {
+	let unmet = [];
+	if (!ns.getPlayer().factions.includes(faction) && !ns.singularity.checkFactionInvitations().includes(faction)) {
+		const facreqs = ns.singularity.getFactionInviteRequirements(faction);
+		for (const req of facreqs) { if (!reqCheck(ns, req)) { unmet.push(req); } }
+	}
+	return unmet;
+}
+
 export function formatTimeString(ns: NS, milliseconds: number): string {
 	return ns.tFormat(milliseconds, false).replace(/ days?/, 'd').replace(/ hours?/, 'h').replace(/ minutes?/, 'm').replace(/ seconds?/,
 		's').replaceAll(', ', '') + " " + Math.floor(milliseconds % 1000).toString().padStart(3, '0') + 'ms';
@@ -771,27 +834,34 @@ export async function getNextSleeveAug(ns: NS, sleeve: number): Promise<AugmentP
 	return sleeveaugs.sort((a, b) => { return a.cost - b.cost; })[0];
 }
 
-export async function createWorkerList(ns: NS): Promise<{
+/*
+type Worker = {
 	id: number,
-	currentTask: SleeveTask | null,
-	setTask: SleeveTask | null,
+	//setTask: "idle" | "crime" | "company" | "faction",
 	object: Player | SleevePerson
-}[]> {
+}
+
+export async function createWorkerList(ns: NS): Promise<Worker[]> {
 	let workerlist = [{
 		id: -1,
-		currentTask: ns.singularity.getCurrentWork() as SleeveTask | null,
-		setTask: ns.singularity.getCurrentWork() as SleeveTask | null,
 		object: ns.getPlayer() as Player | SleevePerson
 	}];
 	const sleevecount = await wrapNS(ns).sleeve.getNumSleevesD();
 	for (let i = 0; i < sleevecount; i++) {
 		workerlist.push({
 			id: i,
-			currentTask: await wrapNS(ns).sleeve.getTaskD(i),
-			setTask: await wrapNS(ns).sleeve.getTaskD(i),
 			object: await wrapNS(ns).sleeve.getSleeveD(i)
 		});
 	}
 	return workerlist;
 }
 
+export async function setCrimeIdleTypeless(ns: NS, worker: Worker, focus: boolean): Promise<void> {
+	const crimetask = getStabbin(ns, worker.object) ? "Homicide" : "Mug";
+	if (worker.id > -1) { await wrapNS(ns).sleeve.setToCommitCrimeD(worker.id, crimetask); }
+	else { await wrapNS(ns).singularity.commitCrimeD(crimetask, focus); }
+}
+
+export async function setCompanyWorkTypeless(ns: NS, worker: Worker, focus: boolean): Promise<void> {
+}
+*/

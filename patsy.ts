@@ -73,7 +73,7 @@ export async function main(ns: NS): Promise<void> {
 		let pokefac = desiredfactions[iterator];
 		ns.print("poking " + pokefac + "...");
 		if (await factionHasAugs(ns, pokefac) && checkFactionEnemies(ns, pokefac)) {
-			await joinThisFaction(ns, pokefac, focus);
+			await joinThisFaction(ns, pokefac, focus); //TODO: create a new function that instead returns unmet requirements
 			worklist = await createWorklist(ns, augqueue);
 		}
 		iterator++;

@@ -4,7 +4,7 @@ export async function main(ns: NS): Promise<void> {
 	const wns = wrapNS(ns);
 	//const playerfacs = (ns.args[0] == true);
 	const playeraugs = await wns.singularity.getOwnedAugmentationsD(true);
-	let auglist = (await augLister(ns)).filter(targaug => !playeraugs.includes(targaug));
+	let auglist = (await augLister(ns)).filter(targaug => !playeraugs.includes(targaug)).reverse();
 	if (ns.gang.inGang()) {
 		const gangAugs = await wns.singularity.getAugmentationsFromFactionD(ns.gang.getGangInformation().faction);
 		auglist = auglist.filter(aug => !gangAugs.includes(aug));
