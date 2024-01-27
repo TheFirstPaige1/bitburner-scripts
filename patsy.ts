@@ -5,6 +5,8 @@ import {
 } from "./bitlib";
 export async function main(ns: NS): Promise<void> {
 
+	const installcount = 7;
+
 	//initial setup
 	ns.killall("home", true); //this is here to ensure the script will re-run from the start properly if need be
 	const wns = wrapNS(ns);
@@ -20,6 +22,7 @@ export async function main(ns: NS): Promise<void> {
 
 	ns.run("totalhack.js"); //run server hacking manager
 	ns.run("ganggang.js"); //run gang manager
+	ns.run("clericalpool.js"); //run sleeve manager
 
 	//do 5 minutes of computer science for some initial hacking levels
 	sing.universityCourse("Rothman University", "Computer Science", focus);
@@ -64,82 +67,84 @@ export async function main(ns: NS): Promise<void> {
 	- all sleeves and/or player not given a task will spend the time doing crime
 	*/
 	const waitingcount = await getWaitingCount(ns); //number of uninstalled but purchased augments
-	const augqueue = Math.max(0, (7 - waitingcount)); //number of augments left to buy this loop
+	const augqueue = Math.max(0, (installcount - waitingcount)); //number of augments left to buy this loop
 
 	//creates a worklist (list of augments to work towards buying) and joins more factions if the length is below the install limit
-	let worklist = await createWorklist(ns, augqueue);
-	let iterator = 0;
-	while (worklist.length < augqueue && iterator < desiredfactions.length) {
-		let pokefac = desiredfactions[iterator];
-		ns.print("poking " + pokefac + "...");
-		if (await factionHasAugs(ns, pokefac) && checkFactionEnemies(ns, pokefac)) {
-			await joinThisFaction(ns, pokefac, focus); //TODO: create a new function that instead returns unmet requirements
-			worklist = await createWorklist(ns, augqueue);
-		}
-		iterator++;
-	}
-	sing.stopAction();
-	joinEveryInvitedFaction(ns);
-	worklist = await createWorklist(ns, augqueue);
-
-	//print the worklist to the console, for transparency
-	for (const aug of worklist) {
-		ns.tprint((worklist.length - worklist.indexOf(aug)) + ": " + aug + ", "
-			+ ns.formatNumber(sing.getAugmentationRepReq(aug)) + ", "
-			+ (await wsing.getAugmentationFactionsD(aug)).toString());
-	}
-
-	ns.run("servershare.js"); //run the public server ram share script to increase faction rep gains
-
-	//being in a gang changes how buying augments is handled for most augments, so we set up the needed info here
-	let gangaugs = [] as string[];
-	let gangfac = "";
-	let buylist = [] as string[];
-	if (ns.gang.inGang()) {
-		gangfac = ns.gang.getGangInformation().faction
-		gangaugs = await wsing.getAugmentationsFromFactionD(gangfac);
-	}
-
-	//iterate down the worklist, starting with the most expensive augment, and working to ensure each faction in turn had enough rep
-	//between this and the faction code up above represents the bulk of the sleeve changes
-	for (const targaug of worklist) {
-		if (!gangaugs.includes(targaug)) { //if the targeted augment isn't available from your gang...
-			let augfacs = await wsing.getAugmentationFactionsD(targaug);
-			if (!augfacs.some(fac => sing.getFactionRep(fac) >= sing.getAugmentationRepReq(targaug))) { //...and none of the factions that offer it have enough rep
-				let workfac = augfacs.filter(fac => ns.getPlayer().factions.includes(fac)).sort((a, b) => { //grab the one with the most favour
-					return sing.getFactionFavor(b) - sing.getFactionFavor(a);
-				})[0];
-				buylist.push(workfac);
-				ns.print("aiming to get " + targaug + " from " + workfac + "...");
-				if (!sing.workForFaction(workfac, "hacking", focus)) { sing.workForFaction(workfac, "field", focus) } //and work your butt off
-				while (sing.getFactionRep(workfac) < sing.getAugmentationRepReq(targaug)) {
-					if (sing.getFactionFavor(workfac) >= ns.getFavorToDonate()) { //if we have enough favor to donate, do so periodically in the background
-						await wsing.donateToFactionD(workfac, Math.max(10000000, Math.trunc(ns.getServerMoneyAvailable("home") / 4)))
-					}
-					await ns.sleep(60000);
-				}
-				sing.stopAction();
-			} else { //...and one or more of them has enough rep, grab the one with the most rep
-				buylist.push(augfacs.sort((a, b) => { return sing.getFactionRep(b) - sing.getFactionRep(a); })[0]);
+	if (augqueue > 0) {
+		let worklist = await createWorklist(ns, augqueue);
+		let iterator = 0;
+		while (worklist.length < augqueue && iterator < desiredfactions.length) {
+			let pokefac = desiredfactions[iterator];
+			ns.print("poking " + pokefac + "...");
+			if (await factionHasAugs(ns, pokefac) && checkFactionEnemies(ns, pokefac)) {
+				await joinThisFaction(ns, pokefac, focus); //TODO: create a new function that instead returns unmet requirements
+				worklist = await createWorklist(ns, augqueue);
 			}
-		} else { //if your gang offer it instead, just wait for them to be ready for you
-			buylist.push(gangfac);
-			ns.print("aiming to get " + targaug + " from " + gangfac + "...");
-			while (sing.getFactionRep(gangfac) < sing.getAugmentationRepReq(targaug)) { await moneyTimeKill(ns, focus); }
+			iterator++;
 		}
-	}
+		sing.stopAction();
+		joinEveryInvitedFaction(ns);
+		worklist = await createWorklist(ns, augqueue);
 
-	ns.scriptKill("h4ckrnet.js", "home"); //we want to stop the hacknet from expanding and eating money now
-	ns.scriptKill("babysitter.js", "home"); //and dedicate hashes to one task
-	ns.run("hashout.js"); //making fat stacks of cash
+		//print the worklist to the console, for transparency
+		for (const aug of worklist) {
+			ns.tprint((worklist.length - worklist.indexOf(aug)) + ": " + aug + ", "
+				+ ns.formatNumber(sing.getAugmentationRepReq(aug)) + ", "
+				+ (await wsing.getAugmentationFactionsD(aug)).toString());
+		}
 
-	//now we iterate down the length of our work + buy lists, buying the augment in the worklist from the faction in the buylist
-	//this is a bit awkward but it allows gangs to work for this
-	for (let i = 0; i < worklist.length; i++) {
-		let targaug = worklist[i];
-		let targfac = buylist[i];
-		ns.print("buying " + targaug + " from " + targfac + "...");
-		while (!(await wsing.purchaseAugmentationD(targfac, targaug))) { await moneyTimeKill(ns, focus); }
+		ns.run("servershare.js"); //run the public server ram share script to increase faction rep gains
+
+		//being in a gang changes how buying augments is handled for most augments, so we set up the needed info here
+		let gangaugs = [] as string[];
+		let gangfac = "";
+		let buylist = [] as string[];
+		if (ns.gang.inGang()) {
+			gangfac = ns.gang.getGangInformation().faction
+			gangaugs = await wsing.getAugmentationsFromFactionD(gangfac);
+		}
+
+		//iterate down the worklist, starting with the most expensive augment, and working to ensure each faction in turn had enough rep
+		//between this and the faction code up above represents the bulk of the sleeve changes
+		for (const targaug of worklist) {
+			if (!gangaugs.includes(targaug)) { //if the targeted augment isn't available from your gang...
+				let augfacs = await wsing.getAugmentationFactionsD(targaug);
+				if (!augfacs.some(fac => sing.getFactionRep(fac) >= sing.getAugmentationRepReq(targaug))) { //...and none of the factions that offer it have enough rep
+					let workfac = augfacs.filter(fac => ns.getPlayer().factions.includes(fac)).sort((a, b) => { //grab the one with the most favour
+						return sing.getFactionFavor(b) - sing.getFactionFavor(a);
+					})[0];
+					buylist.push(workfac);
+					ns.print("aiming to get " + targaug + " from " + workfac + "...");
+					if (!sing.workForFaction(workfac, "hacking", focus)) { sing.workForFaction(workfac, "field", focus) } //and work your butt off
+					while (sing.getFactionRep(workfac) < sing.getAugmentationRepReq(targaug)) {
+						if (sing.getFactionFavor(workfac) >= ns.getFavorToDonate()) { //if we have enough favor to donate, do so periodically in the background
+							await wsing.donateToFactionD(workfac, Math.max(10000000, Math.trunc(ns.getServerMoneyAvailable("home") / 4)))
+						}
+						await ns.sleep(60000);
+					}
+					sing.stopAction();
+				} else { //...and one or more of them has enough rep, grab the one with the most rep
+					buylist.push(augfacs.sort((a, b) => { return sing.getFactionRep(b) - sing.getFactionRep(a); })[0]);
+				}
+			} else { //if your gang offer it instead, just wait for them to be ready for you
+				buylist.push(gangfac);
+				ns.print("aiming to get " + targaug + " from " + gangfac + "...");
+				while (sing.getFactionRep(gangfac) < sing.getAugmentationRepReq(targaug)) { await moneyTimeKill(ns, focus); }
+			}
+		}
+
+		ns.scriptKill("h4ckrnet.js", "home"); //we want to stop the hacknet from expanding and eating money now
+		ns.scriptKill("babysitter.js", "home"); //and dedicate hashes to one task
+		ns.run("hashout.js"); //making fat stacks of cash
+
+		//now we iterate down the length of our work + buy lists, buying the augment in the worklist from the faction in the buylist
+		//this is a bit awkward but it allows gangs to work for this
+		for (let i = 0; i < worklist.length; i++) {
+			let targaug = worklist[i];
+			let targfac = buylist[i];
+			ns.print("buying " + targaug + " from " + targfac + "...");
+			while (!(await wsing.purchaseAugmentationD(targfac, targaug))) { await moneyTimeKill(ns, focus); }
+		}
 	}
 
 	//now that we have a list of augments awaiting installation, cleanup time

@@ -830,7 +830,9 @@ export async function isSleeveAug(ns: NS, augment: string): Promise<boolean> {
 }
 
 export async function getNextSleeveAug(ns: NS, sleeve: number): Promise<AugmentPair> {
-	let sleeveaugs = await asyncFilter(await wrapNS(ns).sleeve.getSleevePurchasableAugsD(sleeve), async aug => await isSleeveAug(ns, aug.name));
+	//let sleeveaugs = await asyncFilter(await wrapNS(ns).sleeve.getSleevePurchasableAugsD(sleeve), async aug => await isSleeveAug(ns, aug.name));
+	//frankly, if sleeves are gonna be imitating the player, just buy all augments
+	let sleeveaugs = await wrapNS(ns).sleeve.getSleevePurchasableAugsD(sleeve);
 	return sleeveaugs.sort((a, b) => { return a.cost - b.cost; })[0];
 }
 
@@ -865,3 +867,15 @@ export async function setCrimeIdleTypeless(ns: NS, worker: Worker, focus: boolea
 export async function setCompanyWorkTypeless(ns: NS, worker: Worker, focus: boolean): Promise<void> {
 }
 */
+
+export async function handleSleeveClasses(ns: NS, sleeve: number, playertask: any): Promise<void> {
+	const combatstats = ["str", "def", "dex", "agi"];
+	let sleevelocation = (await wrapNS(ns).sleeve.getSleeveD(sleeve)).city;
+	if (combatstats.includes(playertask.classType)) {
+		if (sleevelocation != "Sector-12") { await wrapNS(ns).sleeve.travelD(sleeve, "Sector-12"); }
+		await wrapNS(ns).sleeve.setToGymWorkoutD(sleeve, "Powerhouse Gym", playertask.classType);
+	} else {
+		if (sleevelocation != "Volhaven") { await wrapNS(ns).sleeve.travelD(sleeve, "Volhaven"); }
+		await wrapNS(ns).sleeve.setToUniversityCourseD(sleeve, "ZB Institute of Technology", playertask.classType);
+	}
+}
